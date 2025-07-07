@@ -10,15 +10,37 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
   const [skillLevel, setSkillLevel] = useState("");
   const [domain, setDomain] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!repoUrl || !skillLevel || !domain) {
       alert("Please fill all fields.");
       return;
     }
     
-    // Pass the data back to parent component
-    onSubmit({ repoUrl, skillLevel, domain });
-    onClose(); // close modal after submission
+    try {
+      const response = await fetch("http://localhost:8000/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          repo_url: repoUrl,
+          skill_level: skillLevel,
+          domain: domain,
+        }),
+      });
+  
+      const data = await response.json();
+      console.log("✅ Server Response:", data.message);
+      
+      // Pass the data back to parent component
+      onSubmit({ repoUrl, skillLevel, domain });
+      
+      alert("Project submitted successfully!");
+      onClose(); // close modal after submission
+    } catch (err) {
+      console.error("❌ Error submitting project:", err);
+      alert("Failed to submit project.");
+    }
   };
 
   return (
