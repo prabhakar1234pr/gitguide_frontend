@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from '@clerk/nextjs';
+import { createProject } from "../../services/api";
 
 interface Props {
   onClose: () => void;
@@ -6,9 +8,11 @@ interface Props {
 }
 
 export default function NewProjectModal({ onClose, onSubmit }: Props) {
+  const { getToken } = useAuth();
   const [repoUrl, setRepoUrl] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
   const [domain, setDomain] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (!repoUrl || !skillLevel || !domain) {
@@ -16,30 +20,28 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
-      const response = await fetch("http://localhost:8000/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      await createProject(
+        {
           repo_url: repoUrl,
           skill_level: skillLevel,
           domain: domain,
-        }),
-      });
-  
-      const data = await response.json();
-      console.log("✅ Server Response:", data.message);
+        },
+        getToken
+      );
       
       // Pass the data back to parent component
       onSubmit({ repoUrl, skillLevel, domain });
       
-      alert("Project submitted successfully!");
+      alert("Project saved to database! ✅");
       onClose(); // close modal after submission
     } catch (err) {
       console.error("❌ Error submitting project:", err);
-      alert("Failed to submit project.");
+      alert("Failed to save project ❌");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,6 +61,7 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
               onChange={(e) => setRepoUrl(e.target.value)}
               className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 text-gray-700 placeholder-gray-400"
               placeholder="https://github.com/username/repo"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -73,6 +76,7 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
                     value={level}
                     onChange={() => setSkillLevel(level)}
                     className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
+                    disabled={isSubmitting}
                   />
                   <span className="text-gray-700 font-medium">{level}</span>
                 </label>
@@ -86,6 +90,7 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 text-gray-700 bg-white"
+              disabled={isSubmitting}
             >
               <option value="" className="text-gray-400">Select domain</option>
               <option value="Full Stack" className="text-gray-700">Full Stack</option>
@@ -102,14 +107,16 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
           <button
             onClick={onClose}
             className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors duration-200"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            disabled={isSubmitting}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            Continue
+            {isSubmitting ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>
