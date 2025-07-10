@@ -32,10 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
           <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center h-16">
@@ -72,9 +72,9 @@ export default function RootLayout({
               </div>
             </div>
           </header>
-          {children}
-        </body>
-      </html>
+        {children}
+      </body>
+    </html>
     </ClerkProvider>
   );
 }

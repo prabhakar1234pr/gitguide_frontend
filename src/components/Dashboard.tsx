@@ -48,18 +48,50 @@ export default function Dashboard() {
     loadProjects();
   }, [isLoaded, userId, getToken]);
 
-  const handleProjectSubmit = (projectData: { repoUrl: string; skillLevel: string; domain: string }) => {
-    const newProject: Project = {
-      project_id: Date.now().toString(),
-      ...projectData,
-      createdAt: new Date().toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      })
-    };
-    
-    setProjects(prev => [newProject, ...prev]);
+  const handleProjectDelete = (projectId: string) => {
+    setProjects(prev => prev.filter(project => project.project_id !== projectId));
+  };
+
+  const handleProjectSubmit = async (projectData: { repoUrl: string; skillLevel: string; domain: string }) => {
+    try {
+      const token = await getToken();
+      const response = await fetch('http://localhost:8000/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          repo_url: projectData.repoUrl,
+          skill_level: projectData.skillLevel,
+          domain: projectData.domain,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create project');
+      }
+
+      const result = await response.json();
+      
+      // Add the new project with the real project_id from backend
+      const newProject: Project = {
+        project_id: result.project_id.toString(),
+        repoUrl: projectData.repoUrl,
+        skillLevel: projectData.skillLevel,
+        domain: projectData.domain,
+        createdAt: new Date().toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })
+      };
+      
+      setProjects(prev => [newProject, ...prev]);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      // Show error to user - you might want to add a toast notification here
+    }
   };
 
   // Show loading state while Clerk is initializing
@@ -121,10 +153,12 @@ export default function Dashboard() {
               {projects.map((project) => (
                 <ProjectCard
                   key={project.project_id}
+                  projectId={project.project_id}
                   repoUrl={project.repoUrl}
                   skillLevel={project.skillLevel}
                   domain={project.domain}
                   createdAt={project.createdAt}
+                  onDelete={handleProjectDelete}
                 />
               ))}
             </div>
