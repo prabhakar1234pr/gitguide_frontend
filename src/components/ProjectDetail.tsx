@@ -99,7 +99,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             }
           } catch (error) {
             console.error('Failed to get agent status:', error);
-          }
+        }
         }
         
       } catch (error) {
@@ -272,13 +272,13 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                   <div>
                     <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
                       {displayName}
-                    </h1>
+          </h1>
                     <p className="text-gray-400 text-sm mt-1">
                       {ownerName} • {project.domain}
                     </p>
                   </div>
                 </div>
-                
+          
                 {/* Completion Percentage */}
                 {project.is_processed && (
                   <div className="flex items-center gap-4">

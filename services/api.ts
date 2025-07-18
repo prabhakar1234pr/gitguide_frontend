@@ -65,7 +65,7 @@ export const getUserProjects = async (getToken: () => Promise<string | null>) =>
     throw error;
   }
 };
-
+  
 // Agent API functions
 export const triggerAgentProcessing = async (
   projectId: number,
@@ -269,5 +269,141 @@ export const getProjectConcepts = async (
     console.error("❌ Error getting project concepts:", error);
     throw error;
   }
+};
+  
+// ==================== REGENERATION API FUNCTIONS ====================
+
+export const regenerateProjectOverview = async (projectId: number, userPrompt: string, getToken: () => Promise<string | null>) => {
+  const token = await getToken();
+  
+  const response = await fetch(`http://localhost:8000/agent/regenerate/project-overview`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      user_prompt: userPrompt
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to regenerate project overview: ${errorText}`);
+  }
+
+  return response.json();
+};
+
+export const regenerateWholePath = async (projectId: number, userPrompt: string, getToken: () => Promise<string | null>) => {
+  const token = await getToken();
+  
+  const response = await fetch(`http://localhost:8000/agent/regenerate/whole-path`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      user_prompt: userPrompt
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to regenerate learning path: ${errorText}`);
+  }
+
+  return response.json();
+};
+
+export const regenerateConcept = async (projectId: number, conceptId: string, userPrompt: string, getToken: () => Promise<string | null>) => {
+  const token = await getToken();
+  
+  const response = await fetch(`http://localhost:8000/agent/regenerate/concept`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      concept_id: conceptId,
+      user_prompt: userPrompt
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to regenerate concept: ${errorText}`);
+  }
+
+  return response.json();
+};
+
+export const regenerateSubtopic = async (
+  projectId: number, 
+  conceptId: string, 
+  subtopicId: string, 
+  userPrompt: string, 
+  getToken: () => Promise<string | null>
+) => {
+  const token = await getToken();
+  
+  const response = await fetch(`http://localhost:8000/agent/regenerate/subtopic`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      concept_id: conceptId,
+      subtopic_id: subtopicId,
+      user_prompt: userPrompt
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to regenerate subtopic: ${errorText}`);
+  }
+
+  return response.json();
+};
+
+export const regenerateTask = async (
+  projectId: number, 
+  conceptId: string, 
+  subtopicId: string, 
+  taskId: string, 
+  userPrompt: string, 
+  getToken: () => Promise<string | null>
+) => {
+  const token = await getToken();
+  
+  const response = await fetch(`http://localhost:8000/agent/regenerate/task`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      project_id: projectId,
+      concept_id: conceptId,
+      subtopic_id: subtopicId,
+      task_id: taskId,
+      user_prompt: userPrompt
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to regenerate task: ${errorText}`);
+  }
+
+  return response.json();
 };
   
