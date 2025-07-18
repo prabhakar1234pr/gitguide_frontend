@@ -1,6 +1,6 @@
 # GitGuide Frontend
 
-A modern Next.js application that transforms GitHub repositories into personalized learning journeys with interactive project management and AI-powered assistance.
+A modern Next.js application that transforms GitHub repositories into personalized learning journeys with interactive project management and AI-powered assistance. GitGuide_Backend Github Repo URL : https://github.com/prabhakar1234pr/gitguide_backend
 
 ## 🚀 Features
 
