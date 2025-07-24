@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from 'react-markdown';
+
 interface SelectedContent {
   type: 'project' | 'concept' | 'subtopic' | 'task';
   title: string;
@@ -7,7 +9,7 @@ interface SelectedContent {
 }
 
 interface ContentDisplayProps {
-  selectedContent: SelectedContent | null;
+  selectedContent: SelectedContent;
   onVerifyTask: (taskTitle: string) => void;
 }
 
@@ -61,7 +63,62 @@ export default function ContentDisplay({ selectedContent, onVerifyTask }: Conten
       </div>
       
       <div className="text-gray-300 leading-relaxed prose prose-invert max-w-none">
-        {selectedContent.description}
+        <ReactMarkdown
+          components={{
+            // Custom styling for markdown elements in content display
+            p: ({ children }) => <p className="mb-4 last:mb-0 text-gray-300">{children}</p>,
+            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 text-white">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-xl font-bold mb-3 text-white">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-lg font-bold mb-2 text-white">{children}</h3>,
+            h4: ({ children }) => <h4 className="text-base font-bold mb-2 text-white">{children}</h4>,
+            code: ({ children, className }) => {
+              const isInline = !className;
+              return isInline ? (
+                <code className="bg-gray-800 text-purple-300 px-2 py-1 rounded font-mono text-sm">
+                  {children}
+                </code>
+              ) : (
+                <code className="block bg-gray-800 text-green-300 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                  {children}
+                </code>
+              );
+            },
+            pre: ({ children }) => (
+              <pre className="bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4 border border-gray-700">
+                {children}
+              </pre>
+            ),
+            strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+            em: ({ children }) => <em className="text-gray-200 italic">{children}</em>,
+            ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 text-gray-300">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-300">{children}</ol>,
+            li: ({ children }) => <li className="text-gray-300">{children}</li>,
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-4 border-purple-400 pl-4 italic text-gray-300 mb-4 bg-white/5 py-2 rounded-r">
+                {children}
+              </blockquote>
+            ),
+            a: ({ children, href }) => (
+              <a href={href} className="text-blue-400 hover:text-blue-300 underline transition-colors" target="_blank" rel="noopener noreferrer">
+                {children}
+              </a>
+            ),
+            table: ({ children }) => (
+              <div className="overflow-x-auto mb-4">
+                <table className="min-w-full border border-gray-600 rounded-lg">
+                  {children}
+                </table>
+              </div>
+            ),
+            thead: ({ children }) => <thead className="bg-gray-800">{children}</thead>,
+            tbody: ({ children }) => <tbody>{children}</tbody>,
+            tr: ({ children }) => <tr className="border-b border-gray-600">{children}</tr>,
+            th: ({ children }) => <th className="px-4 py-2 text-left text-white font-semibold">{children}</th>,
+            td: ({ children }) => <td className="px-4 py-2 text-gray-300">{children}</td>,
+          }}
+        >
+          {selectedContent.description}
+        </ReactMarkdown>
       </div>
       
       {/* Verify Task Button for tasks */}

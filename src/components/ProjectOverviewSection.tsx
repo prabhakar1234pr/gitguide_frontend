@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import ReactMarkdown from 'react-markdown';
 
 interface ProjectOverviewSectionProps {
   projectId: string;
@@ -101,9 +102,51 @@ export default function ProjectOverviewSection({ projectId }: ProjectOverviewSec
               ) : error ? (
                 <p className="text-red-300 text-sm">{error}</p>
               ) : projectOverview ? (
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
-                  {projectOverview}
-                </p>
+                <div className="text-gray-300 text-sm leading-relaxed prose prose-invert prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      // Custom styling for markdown elements in project overview
+                      p: ({ children }) => <p className="mb-2 last:mb-0 text-gray-300">{children}</p>,
+                      h1: ({ children }) => <h1 className="text-base font-bold mb-2 text-white">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-sm font-bold mb-2 text-white">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 text-white">{children}</h3>,
+                      code: ({ children, className }) => {
+                        const isInline = !className;
+                        return isInline ? (
+                          <code className="bg-gray-700 text-purple-300 px-1 py-0.5 rounded text-xs font-mono">
+                            {children}
+                          </code>
+                        ) : (
+                          <code className="block bg-gray-700 text-green-300 p-2 rounded text-xs font-mono overflow-x-auto">
+                            {children}
+                          </code>
+                        );
+                      },
+                      pre: ({ children }) => (
+                        <pre className="bg-gray-700 p-2 rounded overflow-x-auto mb-2">
+                          {children}
+                        </pre>
+                      ),
+                      strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                      em: ({ children }) => <em className="text-gray-200 italic">{children}</em>,
+                      ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                      li: ({ children }) => <li className="text-gray-300">{children}</li>,
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-2 border-purple-400 pl-2 italic text-gray-300 mb-2">
+                          {children}
+                        </blockquote>
+                      ),
+                      a: ({ children, href }) => (
+                        <a href={href} className="text-blue-400 hover:text-blue-300 underline text-xs" target="_blank" rel="noopener noreferrer">
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
+                    {projectOverview}
+                  </ReactMarkdown>
+                </div>
               ) : (
                 <p className="text-yellow-300 text-sm">
                   Project overview not available yet. Generate a learning path to see the AI analysis.
