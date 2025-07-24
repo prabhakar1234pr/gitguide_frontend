@@ -5,11 +5,9 @@ import { useAuth } from '@clerk/nextjs';
 
 interface ProjectOverviewSectionProps {
   projectId: string;
-  projectDomain: string;
-  skillLevel: string;
 }
 
-export default function ProjectOverviewSection({ projectId, projectDomain, skillLevel }: ProjectOverviewSectionProps) {
+export default function ProjectOverviewSection({ projectId }: ProjectOverviewSectionProps) {
   const { getToken, isLoaded } = useAuth();
   const [isProjectOverviewOpen, setIsProjectOverviewOpen] = useState(false);
   const [selectedOverview, setSelectedOverview] = useState<string | null>(null);

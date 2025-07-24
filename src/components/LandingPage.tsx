@@ -28,7 +28,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Any Repository</h3>
-              <p className="text-gray-300">Paste any GitHub repo URL and we'll analyze it to create your learning path</p>
+              <p className="text-gray-300">Paste any GitHub repo URL and we&apos;ll analyze it to create your learning path</p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">

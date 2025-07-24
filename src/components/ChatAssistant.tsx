@@ -4,17 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { sendChatMessage, getChatContext, checkChatHealth } from '../../services/api';
 
-interface Task {
-  task_id: number;
-  title: string;
-  description: string;
-  status: 'not_started' | 'in_progress' | 'done';
-  order: number;
-}
-
 interface ChatAssistantProps {
   projectId: string;
-  currentTask?: Task;
 }
 
 interface Message {
@@ -30,13 +21,24 @@ interface Message {
   };
 }
 
-export default function ChatAssistant({ projectId, currentTask }: ChatAssistantProps) {
+interface ChatHealth {
+  status: string;
+}
+
+interface ContextInfo {
+  is_processed: boolean;
+  repo_files_count: number;
+  concepts_count: number;
+  current_task: string | null;
+}
+
+export default function ChatAssistant({ projectId }: ChatAssistantProps) {
   const { getToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [chatHealth, setChatHealth] = useState<any>(null);
-  const [contextInfo, setContextInfo] = useState<any>(null);
+  const [chatHealth, setChatHealth] = useState<ChatHealth | null>(null);
+  const [contextInfo, setContextInfo] = useState<ContextInfo | null>(null);
 
   // Initialize chat on component mount
   useEffect(() => {

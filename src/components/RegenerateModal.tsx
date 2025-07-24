@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
 
 interface RegenerateModalProps {
   isOpen: boolean;

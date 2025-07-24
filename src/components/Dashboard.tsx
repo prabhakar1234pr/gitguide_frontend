@@ -12,6 +12,13 @@ interface Project {
   createdAt: string;
 }
 
+interface ProjectResponse {
+  project_id: number;
+  repo_url: string;
+  skill_level: string;
+  domain: string;
+}
+
 export default function Dashboard() {
   const { getToken, isLoaded, userId } = useAuth();
   const [showModal, setShowModal] = useState(false);
@@ -26,7 +33,7 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const response = await getUserProjects(getToken);
-        const fetchedProjects = response.projects.map((p: any) => ({
+        const fetchedProjects = response.projects.map((p: ProjectResponse) => ({
           project_id: p.project_id.toString(),
           repoUrl: p.repo_url,
           skillLevel: p.skill_level,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import ConceptsSidebar from './ConceptsSidebar';
 import ChatAssistant from './ChatAssistant';
@@ -36,6 +36,43 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [agentError, setAgentError] = useState<string>('');
   const [selectedContent, setSelectedContent] = useState<SelectedContent | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+
+  const calculateCompletionPercentage = useCallback(async (projectIdNum: number) => {
+    try {
+      // Get project concepts and tasks
+      const conceptsData = await getProjectConcepts(projectIdNum, getToken);
+      const concepts = conceptsData.concepts || [];
+      
+      let totalTasks = 0;
+      let completedTasks = 0;
+      
+      // Count all tasks and completed tasks
+      concepts.forEach((concept: any) => {
+        // Handle both 'subTopics' and 'subtopics' naming conventions
+        const subtopics = concept.subTopics || concept.subtopics || [];
+        
+        subtopics.forEach((subtopic: any) => {
+          const tasks = subtopic.tasks || [];
+          totalTasks += tasks.length;
+          
+          tasks.forEach((task: any) => {
+            if (task.status === 'completed') {
+              completedTasks++;
+            }
+          });
+        });
+      });
+      
+      // Calculate percentage (avoid division by zero)
+      const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      console.log(`📊 Progress: ${completedTasks}/${totalTasks} tasks completed (${percentage}%)`);
+      setCompletionPercentage(percentage);
+      
+    } catch (error) {
+      console.error('Failed to calculate completion percentage:', error);
+      setCompletionPercentage(0);
+    }
+  }, [getToken]);
 
   useEffect(() => {
     const loadProject = async () => {
@@ -95,7 +132,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             
             // Calculate actual completion percentage based on task progress
             if (token) {
-              await calculateCompletionPercentage(projectIdNum, token);
+              await calculateCompletionPercentage(projectIdNum);
             }
           } catch (error) {
             console.error('Failed to get agent status:', error);
@@ -110,43 +147,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     };
 
     loadProject();
-  }, [isLoaded, projectId, getToken]);
-
-  const calculateCompletionPercentage = async (projectIdNum: number, token: string) => {
-    try {
-      // Get project concepts and tasks
-      const conceptsData = await getProjectConcepts(projectIdNum, getToken);
-      const concepts = conceptsData.concepts || [];
-      
-      let totalTasks = 0;
-      let completedTasks = 0;
-      
-      // Count all tasks and completed tasks
-      concepts.forEach((concept: any) => {
-        if (concept.subtopics) {
-          concept.subtopics.forEach((subtopic: any) => {
-            if (subtopic.tasks) {
-              subtopic.tasks.forEach((task: any) => {
-                totalTasks++;
-                if (task.status === 'completed') {
-                  completedTasks++;
-                }
-              });
-            }
-          });
-        }
-      });
-      
-      // Calculate percentage (avoid division by zero)
-      const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-      console.log(`📊 Progress: ${completedTasks}/${totalTasks} tasks completed (${percentage}%)`);
-      setCompletionPercentage(percentage);
-      
-    } catch (error) {
-      console.error('Failed to calculate completion percentage:', error);
-      setCompletionPercentage(0);
-    }
-  };
+  }, [isLoaded, projectId, getToken, calculateCompletionPercentage]);
 
   const handleGenerateLearningPath = async () => {
     if (!project) return;
@@ -251,8 +252,6 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* Left Sidebar - Hierarchical Learning Path */}
         <ConceptsSidebar 
           projectId={projectId}
-          projectDomain={project.domain}
-          skillLevel={project.skill_level}
           onContentSelect={handleContentSelect}
         />
 
