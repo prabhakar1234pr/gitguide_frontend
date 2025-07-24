@@ -14,6 +14,9 @@ interface SelectedContent {
   type: 'project' | 'concept' | 'subtopic' | 'task';
   title: string;
   description: string;
+  verification_type?: string;
+  is_verified?: boolean;
+  id?: string | number;
 }
 
 interface Concept {
@@ -39,6 +42,9 @@ interface Task {
   difficulty: string;
   isUnlocked: boolean;
   status: string;
+  verification_type?: string;
+  is_verified?: boolean;
+  task_id: number; // Changed from id to task_id
 }
 
 interface RegenerateState {
@@ -179,7 +185,10 @@ export default function ConceptsSidebar({
     onContentSelect({
       type: 'task',
       title: task.name,
-      description: task.description
+      description: task.description,
+      verification_type: task.verification_type,
+      is_verified: task.is_verified,
+      id: task.task_id // Use integer DB id
     });
   };
 
@@ -337,19 +346,57 @@ export default function ConceptsSidebar({
             ) : concepts.length > 0 ? (
               <div className="space-y-2">
                 {concepts.map((concept, conceptIndex) => (
-                  <div key={`concept-${concept.id || conceptIndex}`} className="border border-white/10 rounded-lg">
-                    <div className="flex items-center">
+                  <div key={`concept-${concept.id || conceptIndex}`} className="border border-white/10 rounded-lg relative">
+                    {/* Lock overlay for locked concepts */}
+                    {!concept.isUnlocked && (
+                      <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    <div className={`flex items-center ${!concept.isUnlocked ? 'opacity-50' : ''}`}>
                       <button
-                        onClick={() => handleConceptClick(concept, conceptIndex)}
-                        className="flex-1 p-3 text-left hover:bg-white/5 transition-colors rounded-l-lg"
+                        onClick={() => concept.isUnlocked ? handleConceptClick(concept, conceptIndex) : null}
+                        disabled={!concept.isUnlocked}
+                        className={`flex-1 p-3 text-left transition-colors rounded-l-lg ${
+                          concept.isUnlocked 
+                            ? 'hover:bg-white/5 cursor-pointer' 
+                            : 'cursor-not-allowed'
+                        }`}
+                        title={concept.isUnlocked ? concept.description : 'Complete previous concepts to unlock'}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${concept.isUnlocked ? 'bg-green-400' : 'bg-gray-400'}`}></div>
-                          <span className="font-medium text-white">{concept.name}</span>
+                          <div className="flex items-center gap-1">
+                            {concept.isUnlocked ? (
+                              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                            ) : (
+                              <div className="w-3 h-3 bg-gray-400 rounded-full relative">
+                                <svg className="w-3 h-3 absolute inset-0 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                              </div>
+                            )}
+                            {!concept.isUnlocked && (
+                              <svg className="w-3 h-3 text-gray-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`font-medium ${concept.isUnlocked ? 'text-white' : 'text-gray-500'}`}>
+                            {concept.name}
+                          </span>
+                          {!concept.isUnlocked && (
+                            <span className="text-xs text-gray-500 bg-gray-700/30 px-2 py-1 rounded">
+                              LOCKED
+                            </span>
+                          )}
                         </div>
                       </button>
                       
-                      {/* Regenerate Concept Button */}
+                      {/* Regenerate Concept Button - only show if unlocked */}
+                      {concept.isUnlocked && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -362,8 +409,9 @@ export default function ConceptsSidebar({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                       </button>
+                      )}
                       
-                      {concept.subTopics && concept.subTopics.length > 0 && (
+                      {concept.subTopics && concept.subTopics.length > 0 && concept.isUnlocked && (
                         <button
                           onClick={() => toggleConceptExpansion(concept.id || conceptIndex)}
                           className="p-3 hover:bg-white/5 transition-colors rounded-r-lg group"
@@ -392,23 +440,53 @@ export default function ConceptsSidebar({
                       const conceptId = concept.id || conceptIndex;
                       const isExpanded = expandedConcepts.includes(conceptId);
                       console.log(`🔍 Rendering concept "${concept.name}": ID=${conceptId}, expanded=${isExpanded}, has_subtopics=${!!concept.subTopics}, subtopics_count=${concept.subTopics?.length || 0}`);
-                      return isExpanded && concept.subTopics;
+                      return isExpanded && concept.subTopics && concept.isUnlocked;
                     })() && (
                       <div className="ml-4 pb-2 border-l-2 border-white/10 pl-3">
                         {concept.subTopics.map((subtopic, subtopicIndex) => (
-                          <div key={`subtopic-${subtopic.id || `${conceptIndex}-${subtopicIndex}`}`} className="mt-2 border border-white/10 rounded-lg">
-                            <div className="flex items-center">
+                          <div key={`subtopic-${subtopic.id || `${conceptIndex}-${subtopicIndex}`}`} className="mt-2 border border-white/10 rounded-lg relative">
+                            {/* Lock overlay for locked subtopics */}
+                            {!subtopic.isUnlocked && (
+                              <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                              </div>
+                            )}
+                            
+                            <div className={`flex items-center ${!subtopic.isUnlocked ? 'opacity-50' : ''}`}>
                               <button
-                                onClick={() => handleSubtopicClick(subtopic, conceptIndex, subtopicIndex)}
-                                className="flex-1 p-2 text-left hover:bg-white/5 transition-colors rounded-l-lg"
+                                onClick={() => subtopic.isUnlocked ? handleSubtopicClick(subtopic, conceptIndex, subtopicIndex) : null}
+                                disabled={!subtopic.isUnlocked}
+                                className={`flex-1 p-2 text-left transition-colors rounded-l-lg ${
+                                  subtopic.isUnlocked 
+                                    ? 'hover:bg-white/5 cursor-pointer' 
+                                    : 'cursor-not-allowed'
+                                }`}
+                                title={subtopic.isUnlocked ? subtopic.description : 'Complete previous subtopics to unlock'}
                               >
                                 <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1">
                                   <div className={`w-2 h-2 rounded-full ${subtopic.isUnlocked ? 'bg-blue-400' : 'bg-gray-400'}`}></div>
-                                  <span className="text-sm text-gray-300">{subtopic.name}</span>
+                                    {!subtopic.isUnlocked && (
+                                      <svg className="w-2 h-2 text-gray-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <span className={`text-sm ${subtopic.isUnlocked ? 'text-gray-300' : 'text-gray-500'}`}>
+                                    {subtopic.name}
+                                  </span>
+                                  {!subtopic.isUnlocked && (
+                                    <span className="text-xs text-gray-500 bg-gray-700/30 px-1 py-0.5 rounded">
+                                      LOCKED
+                                    </span>
+                                  )}
                                 </div>
                               </button>
                               
-                              {/* Regenerate Subtopic Button */}
+                              {/* Regenerate Subtopic Button - only show if unlocked */}
+                              {subtopic.isUnlocked && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -421,8 +499,9 @@ export default function ConceptsSidebar({
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                               </button>
+                              )}
                               
-                              {subtopic.tasks && subtopic.tasks.length > 0 && (
+                              {subtopic.tasks && subtopic.tasks.length > 0 && subtopic.isUnlocked && (
                                 <button
                                   onClick={() => toggleSubtopicExpansion(subtopic.id || `${conceptIndex}-${subtopicIndex}`)}
                                   className="p-2 hover:bg-white/5 transition-colors rounded-r-lg group"
@@ -447,18 +526,56 @@ export default function ConceptsSidebar({
                               )}
                             </div>
                             
-                            {expandedSubtopics.includes(subtopic.id || `${conceptIndex}-${subtopicIndex}`) && subtopic.tasks && (
+                            {expandedSubtopics.includes(subtopic.id || `${conceptIndex}-${subtopicIndex}`) && subtopic.tasks && subtopic.isUnlocked && (
                               <div className="ml-3 pb-2 border-l-2 border-white/5 pl-2">
                                 {subtopic.tasks.map((task, taskIndex) => (
-                                  <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1">
+                                  <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1 relative">
+                                    {/* Lock overlay for locked tasks */}
+                                    {!task.isUnlocked && (
+                                      <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
+                                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                    
                                     <button
-                                      onClick={() => handleTaskClick(task)}
-                                      className="flex-1 p-2 text-left hover:bg-white/5 transition-colors rounded-lg"
+                                      onClick={() => task.isUnlocked ? handleTaskClick(task) : null}
+                                      disabled={!task.isUnlocked}
+                                      className={`flex-1 p-2 text-left transition-colors rounded-lg ${
+                                        task.isUnlocked 
+                                          ? 'hover:bg-white/5 cursor-pointer' 
+                                          : 'cursor-not-allowed opacity-50'
+                                      }`}
+                                      title={task.isUnlocked ? task.description : 'Complete previous tasks to unlock'}
                                     >
                                       <div className="flex items-center gap-3">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${task.isUnlocked ? 'bg-yellow-400' : 'bg-gray-400'}`}></div>
-                                        <span className="text-xs text-gray-400">{task.name}</span>
-                                        {task.difficulty && (
+                                        <div className="flex items-center gap-1">
+                                          {task.is_verified ? (
+                                            // Verified/Completed task
+                                            <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                          ) : task.isUnlocked ? (
+                                            // Unlocked but not completed
+                                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                                          ) : (
+                                            // Locked task
+                                            <svg className="w-2 h-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                          )}
+                                        </div>
+                                                                                <span className={`text-xs ${
+                                          task.is_verified ? 'text-green-400 font-medium' : 
+                                          task.isUnlocked ? 'text-gray-400' : 'text-gray-500'
+                                        }`}>
+                                          {task.name}
+                                          {task.is_verified && (
+                                            <span className="ml-1 text-green-300 text-[10px]">✓ Verified</span>
+                                          )}
+                                        </span>
+                                        {task.difficulty && task.isUnlocked && (
                                           <span className={`text-xs px-2 py-1 rounded ${
                                             task.difficulty === 'easy' ? 'bg-green-500/20 text-green-300' :
                                             task.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
@@ -470,11 +587,12 @@ export default function ConceptsSidebar({
                                       </div>
                                     </button>
                                     
-                                    {/* Regenerate Task Button */}
+                                    {/* Regenerate Task Button - only show if unlocked */}
+                                    {task.isUnlocked && (
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        openRegenerateModal('task', task.name, task.description, concept.id.toString(), subtopic.id.toString(), task.id.toString());
+                                        openRegenerateModal('task', task.name, task.description, concept.id.toString(), subtopic.id.toString(), task.task_id.toString());
                                       }}
                                       className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-white/10 rounded transition-colors"
                                       title="Regenerate this task"
@@ -483,6 +601,7 @@ export default function ConceptsSidebar({
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                       </svg>
                                     </button>
+                                    )}
                                   </div>
                                 ))}
                               </div>

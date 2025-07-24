@@ -102,13 +102,29 @@ export default function ConceptsSidebarModular({
     });
   };
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = async (task: Task) => {
     onContentSelect({
       type: 'task',
       title: task.name,
-      description: task.description
+      description: task.description,
+      verification_type: task.verification_type,
+      is_verified: task.is_verified,
+      id: task.task_id // Use integer DB id
     });
+
+    // After verification, reload concepts to update unlocked tasks
+    // (This assumes verification is triggered from ContentDisplay, so reload after verification)
+    // You may want to expose a callback or event from ContentDisplay to trigger this reload after verification.
   };
+
+  // Add a function to reload concepts, to be called after verification
+  const reloadConcepts = async () => {
+    const projectIdNum = parseInt(projectId);
+    const data = await getProjectConcepts(projectIdNum, getToken);
+    setConcepts(data.concepts || []);
+  };
+
+  // Pass reloadConcepts as a prop to ContentDisplay (or wherever verification happens)
 
   const toggleConceptExpansion = (conceptId: number | string) => {
     setExpandedConcepts(prev => 

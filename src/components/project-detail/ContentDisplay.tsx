@@ -1,19 +1,86 @@
 "use client";
 
 import ReactMarkdown from 'react-markdown';
+import { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { verifyTask } from '../../../services/api';
 
 interface SelectedContent {
   type: 'project' | 'concept' | 'subtopic' | 'task';
   title: string;
   description: string;
+  verification_type?: string;
+  is_verified?: boolean;
+  id?: string | number;
 }
 
 interface ContentDisplayProps {
   selectedContent: SelectedContent;
   onVerifyTask: (taskTitle: string) => void;
+  projectId: string;
 }
 
-export default function ContentDisplay({ selectedContent, onVerifyTask }: ContentDisplayProps) {
+export default function ContentDisplay({ selectedContent, onVerifyTask, projectId }: ContentDisplayProps) {
+  const { getToken } = useAuth();
+  const [verificationInput, setVerificationInput] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+
+  const handleVerification = async () => {
+    if (!verificationInput.trim()) {
+      setVerificationError('Please enter a URL');
+      return;
+    }
+
+    if (selectedContent.id === undefined || selectedContent.id === null) {
+      setVerificationError('Task ID not found');
+      return;
+    }
+
+    let taskId: number;
+    if (typeof selectedContent.id === 'string') {
+      taskId = parseInt(selectedContent.id, 10);
+    } else {
+      taskId = selectedContent.id;
+    }
+    if (isNaN(taskId)) {
+      setVerificationError('Task ID is not a valid integer');
+      return;
+    }
+
+    try {
+      setVerificationLoading(true);
+      setVerificationError('');
+      setVerificationSuccess(false);
+
+      console.log('Verifying task:', selectedContent.verification_type, verificationInput);
+      
+      const result = await verifyTask(
+        parseInt(projectId), 
+        taskId, 
+        verificationInput.trim(),
+        getToken
+      );
+      
+      if (result.success) {
+        setVerificationSuccess(true);
+        setVerificationInput('');
+        
+        // Update the selected content to show as verified
+        selectedContent.is_verified = true;
+      } else {
+        setVerificationError(result.message || 'Verification failed');
+      }
+      
+    } catch (error) {
+      console.error('Verification failed:', error);
+      setVerificationError(error instanceof Error ? error.message : 'Verification failed');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
   if (!selectedContent) {
     return (
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl text-center">
@@ -121,8 +188,89 @@ export default function ContentDisplay({ selectedContent, onVerifyTask }: Conten
         </ReactMarkdown>
       </div>
       
-      {/* Verify Task Button for tasks */}
-      {selectedContent.type === 'task' && (
+      {/* Task Verification Section */}
+      {selectedContent.type === 'task' && selectedContent.verification_type && (
+        <div className="mt-8 pt-6 border-t border-white/20">
+          {selectedContent.is_verified ? (
+            // Already verified
+            <div className="bg-green-500/20 border border-green-400/50 rounded-lg p-4 text-green-300 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span className="font-semibold">✅ Task Verified!</span>
+            </div>
+          ) : (
+            // Verification form
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">
+                {selectedContent.verification_type === 'github_profile' && 'Verify GitHub Profile'}
+                {selectedContent.verification_type === 'repository_creation' && 'Verify Repository Creation'}
+                {selectedContent.verification_type === 'commit_verification' && 'Verify Your Commit'}
+              </h3>
+              
+              {/* Verification Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {selectedContent.verification_type === 'github_profile' && 'GitHub Profile URL'}
+                  {selectedContent.verification_type === 'repository_creation' && 'Repository URL'}
+                  {selectedContent.verification_type === 'commit_verification' && 'Repository URL (to check commits)'}
+                </label>
+                <input
+                  type="url"
+                  value={verificationInput}
+                  onChange={(e) => setVerificationInput(e.target.value)}
+                  placeholder={
+                    selectedContent.verification_type === 'github_profile' 
+                      ? 'https://github.com/yourusername'
+                      : selectedContent.verification_type === 'repository_creation'
+                      ? 'https://github.com/yourusername/project-gitguide'
+                      : 'https://github.com/yourusername/project-gitguide'
+                  }
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              
+              {/* Error Message */}
+              {verificationError && (
+                <div className="text-red-400 text-sm bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+                  {verificationError}
+                </div>
+              )}
+              
+              {/* Success Message */}
+              {verificationSuccess && (
+                <div className="text-green-400 text-sm bg-green-500/20 border border-green-500/50 rounded-lg p-3">
+                  ✅ Verification successful! Great job!
+                </div>
+              )}
+              
+              {/* Verify Button */}
+              <button
+                onClick={() => handleVerification()}
+                disabled={verificationLoading || !verificationInput.trim()}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
+                {verificationLoading ? (
+                  <>
+                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Verify Task
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Regular task verify button for non-verification tasks */}
+      {selectedContent.type === 'task' && !selectedContent.verification_type && (
         <div className="mt-8 pt-6 border-t border-white/20">
           <button
             onClick={() => onVerifyTask(selectedContent.title)}
@@ -131,7 +279,7 @@ export default function ContentDisplay({ selectedContent, onVerifyTask }: Conten
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Verify Task
+            Mark Complete
           </button>
         </div>
       )}

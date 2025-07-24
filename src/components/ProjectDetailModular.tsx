@@ -282,10 +282,19 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
           
           <div className="flex-1 p-6 overflow-y-auto">
             {project.is_processed ? (
+              selectedContent ? (
               <ContentDisplay
                 selectedContent={selectedContent}
                 onVerifyTask={handleVerifyTask}
+                  projectId={projectId}
               />
+              ) : (
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl text-center">
+                  <div className="text-gray-400 text-lg">
+                    Select an item from the learning path to view details
+                  </div>
+                </div>
+              )
             ) : (
               <LearningPathGenerator
                 isProcessing={isProcessing}

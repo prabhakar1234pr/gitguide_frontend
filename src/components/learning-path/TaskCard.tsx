@@ -48,7 +48,7 @@ export default function TaskCard({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onRegenerateTask(task, conceptId, subtopicId, task.id.toString());
+          onRegenerateTask(task, conceptId, subtopicId, task.task_id.toString());
         }}
         className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-white/10 rounded transition-colors"
         title="Regenerate this task"

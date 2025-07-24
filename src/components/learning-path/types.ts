@@ -4,6 +4,9 @@ export interface SelectedContent {
   type: 'project' | 'concept' | 'subtopic' | 'task';
   title: string;
   description: string;
+  verification_type?: string;
+  is_verified?: boolean;
+  id?: string | number;
 }
 
 export interface Concept {
@@ -23,12 +26,15 @@ export interface Subtopic {
 }
 
 export interface Task {
-  id: number;
+  id: string; // external id (task_external_id)
+  task_id: number; // integer DB id
   name: string;
   description: string;
   difficulty: string;
   isUnlocked: boolean;
   status: string;
+  verification_type?: string;
+  is_verified?: boolean;
 }
 
 export interface RegenerateState {
