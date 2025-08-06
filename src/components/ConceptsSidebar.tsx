@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectConcepts, regenerateProjectOverview, regenerateWholePath, regenerateConcept, regenerateSubtopic, regenerateTask } from '../../services/api';
+import { getProjectConcepts, regenerateProjectOverview, regenerateWholePath, regenerateConcept, regenerateSubtopic, regenerateTask, getProjectDays, markDayCompleted } from '../../services/api';
 import RegenerateModal from './RegenerateModal';
 
 interface ConceptsSidebarProps {
@@ -25,6 +25,7 @@ interface Concept {
   description: string;
   isUnlocked: boolean;
   subTopics: Subtopic[];
+  day_number: number; // Added day_number
 }
 
 interface Subtopic {
@@ -44,6 +45,7 @@ interface Task {
   status: string;
   verification_type?: string;
   is_verified?: boolean;
+  is_completed?: boolean; // Added is_completed
   task_id: number; // Changed from id to task_id
 }
 
@@ -74,6 +76,8 @@ export default function ConceptsSidebar({
     itemName: '',
     description: ''
   });
+  const [dayCompletionStatus, setDayCompletionStatus] = useState<{[key: number]: boolean}>({});
+  const [availableNextDays, setAvailableNextDays] = useState<number[]>([]);
 
   useEffect(() => {
     const loadConcepts = async () => {
@@ -98,11 +102,22 @@ export default function ConceptsSidebar({
         // Load concepts
         const conceptsData = await getProjectConcepts(projectIdNum, getToken);
         console.log('🔍 Loaded concepts data:', conceptsData);
-        console.log('🔍 Number of concepts:', conceptsData.concepts?.length || 0);
-        if (conceptsData.concepts && conceptsData.concepts.length > 0) {
-          console.log('🔍 First concept structure:', conceptsData.concepts[0]);
+
+        if (conceptsData && conceptsData.concepts) {
+          setConcepts(conceptsData.concepts);
+          setError('');
+          
+          // Check day completion status
+          checkDayCompletionStatus(conceptsData.concepts);
+          
+          // Auto-expand first unlocked concept
+          const firstUnlockedConcept = conceptsData.concepts.find((c: Concept) => c.isUnlocked);
+          if (firstUnlockedConcept) {
+            setExpandedConcepts([firstUnlockedConcept.id || 0]);
+          }
+        } else {
+          setConcepts([]);
         }
-        setConcepts(conceptsData.concepts || []);
 
         // Load project overview
         const projectResponse = await fetch(`http://localhost:8000/projects/${projectIdNum}`, {
@@ -126,6 +141,84 @@ export default function ConceptsSidebar({
 
     loadConcepts();
   }, [isLoaded, projectId, getToken]);
+
+  // Check which days are completed and can unlock next day
+  const checkDayCompletionStatus = (conceptsData: Concept[]) => {
+    const dayCompletions: {[key: number]: boolean} = {};
+    const nextDaysAvailable: number[] = [];
+
+    // Process each concept (which represents a day)
+    conceptsData.forEach((concept) => {
+      // Use the actual day number from the concept, not the index
+      const dayNumber = concept.day_number || 0;
+      
+      // Check if all tasks in this concept/day are completed
+      let totalTasks = 0;
+      let completedTasks = 0;
+      
+      concept.subTopics?.forEach(subtopic => {
+        subtopic.tasks?.forEach(task => {
+          totalTasks++;
+          // For Day 0, check verification status; for other days, check completion status
+          if (dayNumber === 0) {
+            if (task.is_verified) {
+              completedTasks++;
+            }
+          } else {
+            // For regular days, check is_completed field (not just status)
+            if (task.is_completed === true || task.status === 'completed') {
+              completedTasks++;
+            }
+          }
+        });
+      });
+      
+      const isCompleted = totalTasks > 0 && completedTasks === totalTasks;
+      dayCompletions[dayNumber] = isCompleted;
+      
+      console.log(`📊 Day ${dayNumber}: ${completedTasks}/${totalTasks} tasks completed, Day completed: ${isCompleted}`);
+      
+      // If this day is completed, check if we should show unlock button for next day
+      if (isCompleted && dayNumber < 14) {
+        const nextDayNumber = dayNumber + 1;
+        // Check if next day exists but is not unlocked
+        const nextDayConcept = conceptsData.find(c => c.day_number === nextDayNumber);
+        if (nextDayConcept && !nextDayConcept.isUnlocked) {
+          nextDaysAvailable.push(nextDayNumber);
+          console.log(`🔓 Day ${nextDayNumber} is ready to be unlocked`);
+        }
+      }
+    });
+
+    setDayCompletionStatus(dayCompletions);
+    setAvailableNextDays(nextDaysAvailable);
+  };
+
+  // Function to unlock next day
+  const handleUnlockNextDay = async (dayNumber: number) => {
+    try {
+      const projectIdNum = parseInt(projectId);
+      console.log(`🔓 Attempting to unlock Day ${dayNumber} for project ${projectIdNum}`);
+      
+      // Mark the PREVIOUS day as completed to unlock this day
+      const previousDay = dayNumber - 1;
+      console.log(`📝 Marking Day ${previousDay} as completed to unlock Day ${dayNumber}`);
+      
+      await markDayCompleted(projectIdNum, previousDay, getToken);
+      
+      // Reload concepts to update UI
+      const conceptsData = await getProjectConcepts(projectIdNum, getToken);
+      if (conceptsData && conceptsData.concepts) {
+        setConcepts(conceptsData.concepts);
+        checkDayCompletionStatus(conceptsData.concepts);
+      }
+      
+      console.log(`✅ Successfully unlocked Day ${dayNumber}`);
+    } catch (error) {
+      console.error(`❌ Failed to unlock Day ${dayNumber}:`, error);
+      alert(`Failed to unlock Day ${dayNumber}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
 
   const toggleConceptExpansion = (id: number | string) => {
     setExpandedConcepts(prev => 
@@ -551,13 +644,16 @@ export default function ConceptsSidebar({
                                     >
                                       <div className="flex items-center gap-3">
                                         <div className="flex items-center gap-1">
-                                          {task.is_verified ? (
-                                            // Verified/Completed task
+                                          {task.is_verified || task.status === 'completed' ? (
+                                            // Verified/Completed task - Green checkmark
                                             <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
+                                          ) : task.status === 'in_progress' ? (
+                                            // In progress task - Orange dot
+                                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
                                           ) : task.isUnlocked ? (
-                                            // Unlocked but not completed
+                                            // Unlocked but not started - Yellow dot
                                             <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
                                           ) : (
                                             // Locked task
@@ -566,13 +662,17 @@ export default function ConceptsSidebar({
                                             </svg>
                                           )}
                                         </div>
-                                                                                <span className={`text-xs ${
-                                          task.is_verified ? 'text-green-400 font-medium' : 
+                                        <span className={`text-xs ${
+                                          task.is_verified || task.status === 'completed' ? 'text-green-400 font-medium' : 
+                                          task.status === 'in_progress' ? 'text-orange-400' :
                                           task.isUnlocked ? 'text-gray-400' : 'text-gray-500'
                                         }`}>
                                           {task.name}
-                                          {task.is_verified && (
-                                            <span className="ml-1 text-green-300 text-[10px]">✓ Verified</span>
+                                          {(task.is_verified || task.status === 'completed') && (
+                                            <span className="ml-1 text-green-300 text-[10px]">✓ Complete</span>
+                                          )}
+                                          {task.status === 'in_progress' && (
+                                            <span className="ml-1 text-orange-300 text-[10px]">⚡ In Progress</span>
                                           )}
                                         </span>
                                         {task.difficulty && task.isUnlocked && (
@@ -616,6 +716,28 @@ export default function ConceptsSidebar({
             ) : (
               <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 text-yellow-300 text-sm">
                 No learning concepts available yet. Generate a learning path to see your personalized curriculum.
+              </div>
+            )}
+            
+            {/* Next Day Unlock Buttons */}
+            {availableNextDays.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div className="text-sm font-semibold text-white mb-3">🎉 Ready to Continue?</div>
+                {availableNextDays.map(dayNumber => (
+                  <button
+                    key={dayNumber}
+                    onClick={() => handleUnlockNextDay(dayNumber)}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                    </svg>
+                    🔓 Unlock Day {dayNumber}
+                  </button>
+                ))}
+                <div className="text-xs text-gray-400 text-center">
+                  Complete all tasks in the current day to unlock the next level!
+                </div>
               </div>
             )}
           </div>

@@ -651,4 +651,82 @@ export const verifyTask = async (
 
   return response.json();
 };
+
+// ==================== TASK COMPLETION API FUNCTIONS ====================
+
+// Update task status (mark as completed)
+export const updateTaskStatus = async (
+  taskId: number,
+  status: 'not_started' | 'in_progress' | 'completed',
+  getToken: () => Promise<string | null>
+) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        status: status
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update task: ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    throw error;
+  }
+};
+
+// Mark task as completed (convenience function)
+export const markTaskCompleted = async (
+  taskId: number,
+  getToken: () => Promise<string | null>
+) => {
+  return updateTaskStatus(taskId, 'completed', getToken);
+};
+
+// Check if day can be unlocked (all tasks completed)
+export const checkDayCompletion = async (
+  projectId: number,
+  dayNumber: number,
+  getToken: () => Promise<string | null>
+) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/progress`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to check day completion: ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error checking day completion:", error);
+    throw error;
+  }
+};
   

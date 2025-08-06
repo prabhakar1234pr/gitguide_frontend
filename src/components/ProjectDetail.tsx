@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import ConceptsSidebar from './ConceptsSidebar';
 import ChatAssistant from './ChatAssistant';
 import DaysProgressBar from './DaysProgressBar';
 import ContentDisplay from './project-detail/ContentDisplay';
-import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
+import { triggerAgentProcessing, getAgentStatus, getProjectConcepts, markTaskCompleted } from '../../services/api';
 
 interface Project {
   project_id: string;
@@ -29,7 +30,7 @@ interface SelectedContent {
   description: string;
   verification_type?: string;
   is_verified?: boolean;
-  id?: string;
+  id?: string | number;
 }
 
 export default function ProjectDetail({ projectId }: ProjectDetailProps) {
@@ -41,6 +42,18 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [agentError, setAgentError] = useState<string>('');
   const [selectedContent, setSelectedContent] = useState<SelectedContent | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+
+  // Refs for cleanup
+  const isMountedRef = useRef(true);
+  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup polling timeout
+  const cleanupPolling = useCallback(() => {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+  }, []);
 
   const calculateCompletionPercentage = useCallback(async (projectIdNum: number) => {
     try {
@@ -154,6 +167,14 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     loadProject();
   }, [isLoaded, projectId, getToken, calculateCompletionPercentage]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      cleanupPolling();
+    };
+  }, [cleanupPolling]);
+
   const handleGenerateLearningPath = async () => {
     if (!project) return;
 
@@ -175,10 +196,34 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 
       setProcessingStatus('AI is analyzing the repository...');
 
-      // Poll for status updates
+      // Poll for status updates with proper cleanup
+      let pollCount = 0;
+      const maxPolls = 60; // Maximum 3 minutes of polling (60 * 3 seconds)
+
       const pollStatus = async () => {
+        // Check if component is still mounted
+        if (!isMountedRef.current) {
+          return;
+        }
+
         try {
+          pollCount++;
+          
+          // Stop polling after max attempts
+          if (pollCount > maxPolls) {
+            if (isMountedRef.current) {
+              setProcessingStatus('Processing is taking longer than expected. Please refresh the page.');
+              setIsProcessing(false);
+            }
+            return;
+          }
+
           const statusResponse = await getAgentStatus(projectIdNum, getToken);
+          
+          // Check again if component is still mounted after async call
+          if (!isMountedRef.current) {
+            return;
+          }
           
           if (statusResponse.status === 'completed') {
             setProcessingStatus(`Completed! ${statusResponse.message}`);
@@ -189,19 +234,39 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
             
           } else if (statusResponse.status === 'not_processed') {
             setProcessingStatus('Processing repository...');
-            setTimeout(pollStatus, 3000); // Poll every 3 seconds
+            pollTimeoutRef.current = setTimeout(pollStatus, 3000); // Poll every 3 seconds
           } else {
             setProcessingStatus('AI is working on your learning path...');
-            setTimeout(pollStatus, 3000);
+            pollTimeoutRef.current = setTimeout(pollStatus, 3000);
           }
         } catch (error) {
+          // Check if component is still mounted before updating state
+          if (!isMountedRef.current) {
+            return;
+          }
+
           console.error('Status polling error:', error);
-          setTimeout(pollStatus, 5000); // Retry in 5 seconds
+          
+          // Stop polling on repeated errors
+          if (pollCount > 5) {
+            setProcessingStatus('Error checking status. Please refresh the page.');
+            setIsProcessing(false);
+            return;
+          }
+          
+          pollTimeoutRef.current = setTimeout(pollStatus, 5000); // Retry in 5 seconds
         }
       };
 
       // Start polling after initial trigger
-      setTimeout(pollStatus, 2000);
+      pollTimeoutRef.current = setTimeout(pollStatus, 2000);
+
+      // Cleanup function (should be called on component unmount)
+      return () => {
+        if (pollTimeoutRef.current) {
+          clearTimeout(pollTimeoutRef.current);
+        }
+      };
 
     } catch (error) {
       console.error('Failed to generate learning path:', error);
@@ -214,12 +279,32 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     setSelectedContent(content);
   };
 
-  const handleVerifyTask = (taskTitle: string) => {
-    // TODO: Implement task verification logic
-    console.log('Verifying task:', taskTitle);
-    // This could trigger an API call to verify the task completion
-    // For now, just show a success message
-    alert(`Task "${taskTitle}" verification initiated!`);
+  const handleVerifyTask = async (taskTitle: string, taskId?: string | number) => {
+    if (!project || !taskId) {
+      alert('Task ID not available for completion');
+      return;
+    }
+
+    try {
+      // Convert taskId to number if it's a string
+      const taskIdNum = typeof taskId === 'string' ? parseInt(taskId) : taskId;
+      if (isNaN(taskIdNum)) {
+        alert('Invalid task ID');
+        return;
+      }
+
+      console.log('Marking task as completed:', taskTitle, 'ID:', taskIdNum);
+      await markTaskCompleted(taskIdNum, getToken);
+
+      alert(`Task "${taskTitle}" marked as completed!`);
+      
+      // Reload project data to update completion percentage and UI
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Failed to mark task as completed:', error);
+      alert(`Failed to mark task "${taskTitle}" as completed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   const getProjectName = (repoUrl: string) => {

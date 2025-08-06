@@ -164,9 +164,23 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
       
       setProcessingStatus('AI agent is analyzing your repository...');
       
-      // Poll for completion
+      // Poll for completion with proper cleanup
+      let pollCount = 0;
+      const maxPolls = 90; // Maximum 3 minutes of polling (90 * 2 seconds)
+      let pollTimeoutId: NodeJS.Timeout | null = null;
+
       const pollStatus = async () => {
         try {
+          pollCount++;
+          
+          // Stop polling after max attempts
+          if (pollCount > maxPolls) {
+            console.log('⏰ Polling timeout reached');
+            setIsProcessing(false);
+            setAgentError('Processing is taking longer than expected. Please refresh the page.');
+            return;
+          }
+
           console.log('📊 Checking agent status...');
           const status = await getAgentStatus(projectIdNum, getToken);
           console.log('📊 Status:', status);
@@ -210,18 +224,33 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             setIsProcessing(false);
             setAgentError(status.message || 'Processing failed');
           } else {
-            // Continue polling
-            setTimeout(pollStatus, 2000);  // Poll every 2 seconds
+            // Continue polling with timeout reference
+            pollTimeoutId = setTimeout(pollStatus, 2000);  // Poll every 2 seconds
           }
         } catch (error) {
           console.error('❌ Status polling error:', error);
-          setIsProcessing(false);
-          setAgentError(error instanceof Error ? error.message : 'Failed to check processing status');
+          
+          // Stop polling on repeated errors
+          if (pollCount > 5) {
+            setIsProcessing(false);
+            setAgentError(error instanceof Error ? error.message : 'Failed to check processing status');
+            return;
+          }
+          
+          // Retry with timeout reference
+          pollTimeoutId = setTimeout(pollStatus, 3000);  // Retry in 3 seconds
         }
       };
 
       // Start polling immediately
       pollStatus();
+
+      // Return cleanup function
+      return () => {
+        if (pollTimeoutId) {
+          clearTimeout(pollTimeoutId);
+        }
+      };
       
     } catch (error) {
       console.error('❌ Agent processing error:', error);

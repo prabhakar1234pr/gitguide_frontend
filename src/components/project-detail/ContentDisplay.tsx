@@ -16,7 +16,7 @@ interface SelectedContent {
 
 interface ContentDisplayProps {
   selectedContent: SelectedContent;
-  onVerifyTask: (taskTitle: string) => void;
+  onVerifyTask: (taskTitle: string, taskId?: string | number) => void;
   projectId: string;
 }
 
@@ -273,7 +273,7 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
       {selectedContent.type === 'task' && !selectedContent.verification_type && (
         <div className="mt-8 pt-6 border-t border-white/20">
           <button
-            onClick={() => onVerifyTask(selectedContent.title)}
+            onClick={() => onVerifyTask(selectedContent.title, selectedContent.id)}
             className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
