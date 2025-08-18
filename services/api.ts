@@ -242,6 +242,37 @@ export const markDayCompleted = async (
   }
 };
 
+// Manually unlock a specific day (used after verifying the previous day)
+export const unlockDay = async (
+  projectId: number,
+  dayNumber: number,
+  getToken: () => Promise<string | null>
+) => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/${dayNumber}/unlock`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Failed to unlock day: ${errorData}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error unlocking day:", error);
+    throw error;
+  }
+};
+
 // Get days progress statistics
 export const getDaysProgress = async (
   projectId: number,
@@ -445,7 +476,8 @@ export const checkChatHealth = async () => {
 // Project Learning Path API functions
 export const getProjectConcepts = async (
   projectId: number,
-  getToken: () => Promise<string | null>
+  getToken: () => Promise<string | null>,
+  options?: { activeDay?: number; includePast?: boolean }
 ) => {
   try {
     console.log(`🎯 Fetching concepts for project ${projectId}`);
@@ -457,9 +489,17 @@ export const getProjectConcepts = async (
     }
 
     console.log(`🔑 Using token: ${token.substring(0, 20)}...`);
-    console.log(`📡 Making request to: http://localhost:8000/projects/${projectId}/concepts`);
+    const qs = new URLSearchParams();
+    if (options?.activeDay !== undefined) {
+      qs.set('active_day', String(options.activeDay));
+    }
+    if (options?.includePast) {
+      qs.set('include_past', 'true');
+    }
+    const url = `http://localhost:8000/projects/${projectId}/concepts${qs.toString() ? `?${qs.toString()}` : ''}`;
+    console.log(`📡 Making request to: ${url}`);
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/concepts`, {
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,

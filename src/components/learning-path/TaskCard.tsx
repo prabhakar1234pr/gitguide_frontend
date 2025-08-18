@@ -23,6 +23,8 @@ export default function TaskCard({
   conceptId,
   subtopicId 
 }: TaskCardProps) {
+  const isCompleted = task.is_completed || task.status === 'completed';
+
   return (
     <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1">
       <button
@@ -30,8 +32,11 @@ export default function TaskCard({
         className="flex-1 p-2 text-left hover:bg-white/5 transition-colors rounded-lg"
       >
         <div className="flex items-center gap-3">
-          <div className={`w-1.5 h-1.5 rounded-full ${task.isUnlocked ? 'bg-yellow-400' : 'bg-gray-400'}`}></div>
-          <span className="text-xs text-gray-400">{task.name}</span>
+          <div className={`w-1.5 h-1.5 rounded-full ${
+            isCompleted ? 'bg-green-400' : 
+            task.isUnlocked ? 'bg-yellow-400' : 'bg-gray-400'
+          }`}></div>
+          <span className={`text-xs ${isCompleted ? 'text-green-400' : 'text-gray-400'}`}>{task.name}</span>
           {task.difficulty && (
             <span className={`text-xs px-2 py-1 rounded ${
               task.difficulty === 'easy' ? 'bg-green-500/20 text-green-300' :

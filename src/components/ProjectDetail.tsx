@@ -42,6 +42,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [agentError, setAgentError] = useState<string>('');
   const [selectedContent, setSelectedContent] = useState<SelectedContent | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [activeDayNumber, setActiveDayNumber] = useState<number | null>(null);
 
   // Refs for cleanup
   const isMountedRef = useRef(true);
@@ -343,6 +344,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         <ConceptsSidebar 
           projectId={projectId}
           onContentSelect={handleContentSelect}
+          activeDayNumber={activeDayNumber ?? undefined}
         />
 
         {/* Center Section - Selected Content Display */}
@@ -404,7 +406,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 
               {/* 14-Day Learning Progression - Only show if project is processed */}
               {project.is_processed && (
-                <DaysProgressBar projectId={projectId} />
+                <DaysProgressBar projectId={projectId} onActiveDayChange={(n) => setActiveDayNumber(n)} />
               )}
             </div>
           </div>

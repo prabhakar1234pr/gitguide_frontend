@@ -21,9 +21,10 @@ interface Day {
 
 interface DaysProgressBarProps {
   projectId: string;
+  onActiveDayChange?: (dayNumber: number) => void;
 }
 
-export default function DaysProgressBar({ projectId }: DaysProgressBarProps) {
+export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysProgressBarProps) {
   const { getToken, isLoaded } = useAuth();
   const [days, setDays] = useState<Day[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,9 @@ export default function DaysProgressBar({ projectId }: DaysProgressBarProps) {
         const daysData = await getProjectDays(projectIdNum, getToken);
         setDays(daysData.days || []);
         setCurrentDay(daysData.current_day || null);
+        if (onActiveDayChange && daysData?.current_day?.day_number !== undefined) {
+          onActiveDayChange(daysData.current_day.day_number);
+        }
         
       } catch (error) {
         console.error("Failed to load days:", error);
@@ -68,27 +72,18 @@ export default function DaysProgressBar({ projectId }: DaysProgressBarProps) {
       return; // Can't interact with locked days
     }
 
-    // Special handling for Day 0 verification
+    // Day 0: open verification modal if needed
     if (day.day_number === 0 && day.requires_verification && !day.is_verified) {
       setShowVerification(true);
       return;
     }
 
-    // Mark day as completed if not already completed
-    if (!day.is_completed) {
-      try {
-        const projectIdNum = parseInt(projectId);
-        await markDayCompleted(projectIdNum, day.day_number, getToken);
-        
-        // Reload days data to get updated state
-        const daysData = await getProjectDays(projectIdNum, getToken);
-        setDays(daysData.days || []);
-        setCurrentDay(daysData.current_day || null);
-        
-      } catch (error) {
-        console.error('Failed to mark day completed:', error);
-      }
+    // Switch active day locally and notify parent (sidebar will refetch for this day)
+    setCurrentDay(day);
+    if (onActiveDayChange) {
+      onActiveDayChange(day.day_number);
     }
+    return;
   };
 
   const handleVerifyRepository = async () => {

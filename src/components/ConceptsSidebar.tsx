@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectConcepts, regenerateProjectOverview, regenerateWholePath, regenerateConcept, regenerateSubtopic, regenerateTask, getProjectDays, markDayCompleted } from '../../services/api';
+import { getProjectConcepts, regenerateProjectOverview, regenerateWholePath, regenerateConcept, regenerateSubtopic, regenerateTask, getProjectDays, markDayCompleted, unlockDay, getDay0VerificationStatus } from '../../services/api';
 import RegenerateModal from './RegenerateModal';
 
 interface ConceptsSidebarProps {
   projectId: string;
   onContentSelect: (content: SelectedContent) => void;
+  activeDayNumber?: number;
 }
 
 interface SelectedContent {
@@ -61,7 +62,8 @@ interface RegenerateState {
 
 export default function ConceptsSidebar({ 
   projectId,
-  onContentSelect
+  onContentSelect,
+  activeDayNumber
 }: ConceptsSidebarProps) {
   const { getToken, isLoaded } = useAuth();
   const [concepts, setConcepts] = useState<Concept[]>([]);
@@ -78,6 +80,7 @@ export default function ConceptsSidebar({
   });
   const [dayCompletionStatus, setDayCompletionStatus] = useState<{[key: number]: boolean}>({});
   const [availableNextDays, setAvailableNextDays] = useState<number[]>([]);
+  const [currentDayNumber, setCurrentDayNumber] = useState<number | null>(null);
 
   useEffect(() => {
     const loadConcepts = async () => {
@@ -99,21 +102,29 @@ export default function ConceptsSidebar({
           return;
         }
 
-        // Load concepts
-        const conceptsData = await getProjectConcepts(projectIdNum, getToken);
+        // Load days to determine the current active day
+        const daysData = await getProjectDays(projectIdNum, getToken);
+        const activeDay = (typeof activeDayNumber === 'number')
+          ? activeDayNumber
+          : (daysData?.current_day?.day_number ?? 0);
+        setCurrentDayNumber(activeDay);
+
+        // Load concepts for the active day only; include_past false keeps future days hidden
+        const conceptsData = await getProjectConcepts(projectIdNum, getToken, { activeDay, includePast: false });
         console.log('🔍 Loaded concepts data:', conceptsData);
 
         if (conceptsData && conceptsData.concepts) {
-          setConcepts(conceptsData.concepts);
+          const fullConcepts: Concept[] = conceptsData.concepts;
+          setConcepts(fullConcepts);
           setError('');
           
-          // Check day completion status
-          checkDayCompletionStatus(conceptsData.concepts);
+          // Check day completion status (use a full list; backend already scopes by active day)
+          checkDayCompletionStatus(fullConcepts);
           
-          // Auto-expand first unlocked concept
-          const firstUnlockedConcept = conceptsData.concepts.find((c: Concept) => c.isUnlocked);
-          if (firstUnlockedConcept) {
-            setExpandedConcepts([firstUnlockedConcept.id || 0]);
+          // Auto-expand first concept from the active day list
+          const firstConcept = fullConcepts.find((c: Concept) => c.isUnlocked);
+          if (firstConcept) {
+            setExpandedConcepts([`${firstConcept.day_number}-${firstConcept.id || 0}`]);
           }
         } else {
           setConcepts([]);
@@ -140,7 +151,7 @@ export default function ConceptsSidebar({
     };
 
     loadConcepts();
-  }, [isLoaded, projectId, getToken]);
+  }, [isLoaded, projectId, getToken, activeDayNumber]);
 
   // Check which days are completed and can unlock next day
   const checkDayCompletionStatus = (conceptsData: Concept[]) => {
@@ -191,7 +202,9 @@ export default function ConceptsSidebar({
     });
 
     setDayCompletionStatus(dayCompletions);
-    setAvailableNextDays(nextDaysAvailable);
+    // Ensure we never push duplicate day numbers
+    const uniqueNextDays = Array.from(new Set(nextDaysAvailable));
+    setAvailableNextDays(uniqueNextDays);
   };
 
   // Function to unlock next day
@@ -204,13 +217,39 @@ export default function ConceptsSidebar({
       const previousDay = dayNumber - 1;
       console.log(`📝 Marking Day ${previousDay} as completed to unlock Day ${dayNumber}`);
       
+      try {
       await markDayCompleted(projectIdNum, previousDay, getToken);
+      } catch (err: any) {
+        console.warn('⚠️ markDayCompleted failed, attempting safe unlock flow:', err?.message || err);
+        // If we're trying to unlock Day 1 and Day 0 is fully verified, fall back to a direct unlock
+        if (dayNumber === 1) {
+          try {
+            const status = await getDay0VerificationStatus(projectIdNum, getToken);
+            const allVerified = status?.verification_status?.exists && status?.verification_status?.is_completed;
+            if (allVerified) {
+              await unlockDay(projectIdNum, 1, getToken);
+              console.log('✅ Fallback: Day 1 unlocked directly after confirming Day 0 is completed');
+            } else {
+              throw new Error('Day 0 not fully verified');
+            }
+          } catch (e) {
+            throw err; // rethrow original
+          }
+        } else {
+          throw err;
+        }
+      }
       
-      // Reload concepts to update UI
-      const conceptsData = await getProjectConcepts(projectIdNum, getToken);
+      // Reload days and concepts to update UI, and switch to the newly unlocked day
+      const daysData = await getProjectDays(projectIdNum, getToken);
+      const activeDay = dayNumber; // switch view to the day being unlocked
+      setCurrentDayNumber(activeDay);
+
+      const conceptsData = await getProjectConcepts(projectIdNum, getToken, { activeDay, includePast: false });
       if (conceptsData && conceptsData.concepts) {
-        setConcepts(conceptsData.concepts);
-        checkDayCompletionStatus(conceptsData.concepts);
+        const fullConcepts: Concept[] = conceptsData.concepts;
+        setConcepts(fullConcepts);
+        checkDayCompletionStatus(fullConcepts);
       }
       
       console.log(`✅ Successfully unlocked Day ${dayNumber}`);
@@ -439,7 +478,7 @@ export default function ConceptsSidebar({
             ) : concepts.length > 0 ? (
               <div className="space-y-2">
                 {concepts.map((concept, conceptIndex) => (
-                  <div key={`concept-${concept.id || conceptIndex}`} className="border border-white/10 rounded-lg relative">
+                  <div key={`concept-${concept.day_number}-${concept.id ?? conceptIndex}`} className="border border-white/10 rounded-lg relative">
                     {/* Lock overlay for locked concepts */}
                     {!concept.isUnlocked && (
                       <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
@@ -537,7 +576,7 @@ export default function ConceptsSidebar({
                     })() && (
                       <div className="ml-4 pb-2 border-l-2 border-white/10 pl-3">
                         {concept.subTopics.map((subtopic, subtopicIndex) => (
-                          <div key={`subtopic-${subtopic.id || `${conceptIndex}-${subtopicIndex}`}`} className="mt-2 border border-white/10 rounded-lg relative">
+                          <div key={`subtopic-${concept.day_number}-${subtopic.id ?? `${conceptIndex}-${subtopicIndex}`}`} className="mt-2 border border-white/10 rounded-lg relative">
                             {/* Lock overlay for locked subtopics */}
                             {!subtopic.isUnlocked && (
                               <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
@@ -596,9 +635,9 @@ export default function ConceptsSidebar({
                               
                               {subtopic.tasks && subtopic.tasks.length > 0 && subtopic.isUnlocked && (
                                 <button
-                                  onClick={() => toggleSubtopicExpansion(subtopic.id || `${conceptIndex}-${subtopicIndex}`)}
+                                  onClick={() => toggleSubtopicExpansion(`${concept.day_number}-${subtopic.id ?? `${conceptIndex}-${subtopicIndex}`}`)}
                                   className="p-2 hover:bg-white/5 transition-colors rounded-r-lg group"
-                                  title={expandedSubtopics.includes(subtopic.id || `${conceptIndex}-${subtopicIndex}`) ? "Collapse tasks" : `Show ${subtopic.tasks.length} tasks`}
+                                  title={expandedSubtopics.includes(`${concept.day_number}-${subtopic.id ?? `${conceptIndex}-${subtopicIndex}`}`) ? "Collapse tasks" : `Show ${subtopic.tasks.length} tasks`}
                                 >
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-gray-400 group-hover:text-gray-300">
@@ -619,10 +658,10 @@ export default function ConceptsSidebar({
                               )}
                             </div>
                             
-                            {expandedSubtopics.includes(subtopic.id || `${conceptIndex}-${subtopicIndex}`) && subtopic.tasks && subtopic.isUnlocked && (
+                            {expandedSubtopics.includes(`${concept.day_number}-${subtopic.id ?? `${conceptIndex}-${subtopicIndex}`}`) && subtopic.tasks && subtopic.isUnlocked && (
                               <div className="ml-3 pb-2 border-l-2 border-white/5 pl-2">
                                 {subtopic.tasks.map((task, taskIndex) => (
-                                  <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1 relative">
+                                  <div key={`task-${concept.day_number}-${subtopic.id ?? `${conceptIndex}-${subtopicIndex}`}-${task.task_id ?? taskIndex}`} className="flex items-center mt-1 relative">
                                     {/* Lock overlay for locked tasks */}
                                     {!task.isUnlocked && (
                                       <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center z-10">
