@@ -2,7 +2,7 @@
 import { auth } from '@clerk/nextjs/server';
 
 // API Base URL - uses environment variable or fallback to localhost
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "${API_BASE_URL}";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // For client-side API calls
 export const createProject = async (
