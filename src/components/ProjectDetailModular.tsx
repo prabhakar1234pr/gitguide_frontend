@@ -48,16 +48,19 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
       let completedTasks = 0;
       
       const concepts = conceptsData.concepts || [];
-      concepts.forEach((concept: any) => {
+      concepts.forEach((concept: unknown) => {
         // Handle both 'subTopics' and 'subtopics' naming conventions
-        const subtopics = concept.subTopics || concept.subtopics || [];
+        const conceptData = concept as { subTopics?: unknown[]; subtopics?: unknown[] };
+        const subtopics = conceptData.subTopics || conceptData.subtopics || [];
         
-        subtopics.forEach((subtopic: any) => {
-          const tasks = subtopic.tasks || [];
+        subtopics.forEach((subtopic: unknown) => {
+          const subtopicData = subtopic as { tasks?: unknown[] };
+          const tasks = subtopicData.tasks || [];
           totalTasks += tasks.length;
           
-          tasks.forEach((task: any) => {
-            if (task.status === 'completed') {
+          tasks.forEach((task: unknown) => {
+            const taskData = task as { status?: string };
+            if (taskData.status === 'completed') {
               completedTasks++;
             }
           });

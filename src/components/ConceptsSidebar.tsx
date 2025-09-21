@@ -78,8 +78,10 @@ export default function ConceptsSidebar({
     itemName: '',
     description: ''
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [dayCompletionStatus, setDayCompletionStatus] = useState<{[key: number]: boolean}>({});
   const [availableNextDays, setAvailableNextDays] = useState<number[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDayNumber, setCurrentDayNumber] = useState<number | null>(null);
 
   useEffect(() => {
@@ -219,8 +221,9 @@ export default function ConceptsSidebar({
       
       try {
       await markDayCompleted(projectIdNum, previousDay, getToken);
-      } catch (err: any) {
-        console.warn('⚠️ markDayCompleted failed, attempting safe unlock flow:', err?.message || err);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.warn('⚠️ markDayCompleted failed, attempting safe unlock flow:', errorMessage);
         // If we're trying to unlock Day 1 and Day 0 is fully verified, fall back to a direct unlock
         if (dayNumber === 1) {
           try {
@@ -232,7 +235,7 @@ export default function ConceptsSidebar({
             } else {
               throw new Error('Day 0 not fully verified');
             }
-          } catch (e) {
+          } catch {
             throw err; // rethrow original
           }
         } else {
@@ -241,6 +244,7 @@ export default function ConceptsSidebar({
       }
       
       // Reload days and concepts to update UI, and switch to the newly unlocked day
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const daysData = await getProjectDays(projectIdNum, getToken);
       const activeDay = dayNumber; // switch view to the day being unlocked
       setCurrentDayNumber(activeDay);

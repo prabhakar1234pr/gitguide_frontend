@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectDays, markDayCompleted, verifyDay0Repository, getDay0VerificationStatus } from '../../services/api';
+import { getProjectDays, verifyDay0Repository } from '../../services/api';
 
 interface Day {
   day_id: number;
@@ -65,7 +65,7 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
     };
 
     loadDays();
-  }, [isLoaded, projectId, getToken]);
+  }, [isLoaded, projectId, getToken, onActiveDayChange]);
 
   const handleDayClick = async (day: Day) => {
     if (!day.is_unlocked) {

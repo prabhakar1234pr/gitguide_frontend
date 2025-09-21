@@ -118,6 +118,7 @@ export default function ConceptsSidebarModular({
   };
 
   // Add a function to reload concepts, to be called after verification
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const reloadConcepts = async () => {
     const projectIdNum = parseInt(projectId);
     const data = await getProjectConcepts(projectIdNum, getToken);
