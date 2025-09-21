@@ -40,11 +40,17 @@ jobs:
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
     
-    - name: Pull Vercel Environment Information
-      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+    - name: Create Vercel project configuration
+      run: |
+        mkdir -p .vercel
+        echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
     
     - name: Build Project Artifacts for Vercel  
       run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        NEXT_PUBLIC_API_URL: "http://localhost:8000"
     
     - name: Deploy to Vercel
       run: |
