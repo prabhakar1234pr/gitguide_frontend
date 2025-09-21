@@ -1,14 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable static exports for better performance
-  output: 'standalone',
-  
-  // Enable experimental features
-  experimental: {
-    // Enable server components
-    serverComponentsExternalPackages: ['@clerk/nextjs'],
-  },
+  // Server external packages (moved from experimental in Next.js 15)
+  serverExternalPackages: ['@clerk/nextjs'],
   
   // Image optimization configuration
   images: {

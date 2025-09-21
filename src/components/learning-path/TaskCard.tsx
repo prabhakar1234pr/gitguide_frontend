@@ -23,7 +23,7 @@ export default function TaskCard({
   conceptId,
   subtopicId 
 }: TaskCardProps) {
-  const isCompleted = task.is_completed || task.status === 'completed';
+  const isCompleted = task.status === 'completed';
 
   return (
     <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1">
