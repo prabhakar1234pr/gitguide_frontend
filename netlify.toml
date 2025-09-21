@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_cmVsaWV2ZWQtc2x1Zy0zMS5jbGVyay5hY2NvdW50cy5kZXYk"
+  CLERK_SECRET_KEY = "sk_test_nb8qHpDfuTV3B71LPDSJAhvfCKqO7CZuVZiv3xoTKB"
+  NEXT_PUBLIC_API_URL = "http://localhost:8000"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

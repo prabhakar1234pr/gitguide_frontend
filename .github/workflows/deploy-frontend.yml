@@ -37,13 +37,13 @@ jobs:
         CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
     
-    - name: Deploy to Vercel
+    - name: Deploy to Vercel (Auto-deploy via Git is enabled, but this ensures GitHub Actions works too)
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
         vercel-args: '--prod'
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-org-id: team_vM7iaBtEP3R005sd0Y5xMi8C
+        vercel-project-id: prj_WdbezwNuylfYqpqbB0TiwLA6EZRx
         working-directory: ./
       env:
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
