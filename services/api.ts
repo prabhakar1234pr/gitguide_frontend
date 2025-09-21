@@ -1,6 +1,9 @@
 // gitguide-frontend/src/services/api.ts
 import { auth } from '@clerk/nextjs/server';
 
+// API Base URL - uses environment variable or fallback to localhost
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "${API_BASE_URL}";
+
 // For client-side API calls
 export const createProject = async (
   projectData: {
@@ -17,7 +20,7 @@ export const createProject = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch("http://localhost:8000/projects", {
+    const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,7 +50,7 @@ export const getUserProjects = async (getToken: () => Promise<string | null>) =>
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch("http://localhost:8000/projects", {
+    const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -82,7 +85,7 @@ export const verifyDay0Repository = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/0/verify`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/0/verify`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -120,7 +123,7 @@ export const getDay0VerificationStatus = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/0/verification-status`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/0/verification-status`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -155,7 +158,7 @@ export const getProjectDays = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -191,7 +194,7 @@ export const getCurrentDay = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/current`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/current`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -223,7 +226,7 @@ export const markDayCompleted = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/${dayNumber}/complete`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/${dayNumber}/complete`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -254,7 +257,7 @@ export const unlockDay = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/${dayNumber}/unlock`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/${dayNumber}/unlock`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -285,7 +288,7 @@ export const getDaysProgress = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/progress`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/progress`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -318,7 +321,7 @@ export const triggerAgentProcessing = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch("http://localhost:8000/agent/process", {
+    const response = await fetch("${API_BASE_URL}/agent/process", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -350,7 +353,7 @@ export const getAgentStatus = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/agent/status/${projectId}`, {
+    const response = await fetch(`${API_BASE_URL}/agent/status/${projectId}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -371,7 +374,7 @@ export const getAgentStatus = async (
 
 export const checkAgentHealth = async () => {
   try {
-    const response = await fetch("http://localhost:8000/agent/health", {
+    const response = await fetch("${API_BASE_URL}/agent/health", {
       method: "GET",
     });
 
@@ -402,7 +405,7 @@ export const sendChatMessage = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/chat/project/${projectId}`, {
+    const response = await fetch(`${API_BASE_URL}/chat/project/${projectId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -434,7 +437,7 @@ export const getChatContext = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/chat/project/${projectId}/context`, {
+    const response = await fetch(`${API_BASE_URL}/chat/project/${projectId}/context`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -455,7 +458,7 @@ export const getChatContext = async (
 
 export const checkChatHealth = async () => {
   try {
-    const response = await fetch("http://localhost:8000/chat/health", {
+    const response = await fetch("${API_BASE_URL}/chat/health", {
       method: "GET",
     });
 
@@ -496,7 +499,7 @@ export const getProjectConcepts = async (
     if (options?.includePast) {
       qs.set('include_past', 'true');
     }
-    const url = `http://localhost:8000/projects/${projectId}/concepts${qs.toString() ? `?${qs.toString()}` : ''}`;
+    const url = `${API_BASE_URL}/projects/${projectId}/concepts${qs.toString() ? `?${qs.toString()}` : ''}`;
     console.log(`📡 Making request to: ${url}`);
 
     const response = await fetch(url, {
@@ -529,7 +532,7 @@ export const getProjectConcepts = async (
 export const regenerateProjectOverview = async (projectId: number, userPrompt: string, getToken: () => Promise<string | null>) => {
   const token = await getToken();
   
-  const response = await fetch(`http://localhost:8000/agent/regenerate/project-overview`, {
+  const response = await fetch(`${API_BASE_URL}/agent/regenerate/project-overview`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -552,7 +555,7 @@ export const regenerateProjectOverview = async (projectId: number, userPrompt: s
 export const regenerateWholePath = async (projectId: number, userPrompt: string, getToken: () => Promise<string | null>) => {
   const token = await getToken();
   
-  const response = await fetch(`http://localhost:8000/agent/regenerate/whole-path`, {
+  const response = await fetch(`${API_BASE_URL}/agent/regenerate/whole-path`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -575,7 +578,7 @@ export const regenerateWholePath = async (projectId: number, userPrompt: string,
 export const regenerateConcept = async (projectId: number, conceptId: string, userPrompt: string, getToken: () => Promise<string | null>) => {
   const token = await getToken();
   
-  const response = await fetch(`http://localhost:8000/agent/regenerate/concept`, {
+  const response = await fetch(`${API_BASE_URL}/agent/regenerate/concept`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -605,7 +608,7 @@ export const regenerateSubtopic = async (
 ) => {
   const token = await getToken();
   
-  const response = await fetch(`http://localhost:8000/agent/regenerate/subtopic`, {
+  const response = await fetch(`${API_BASE_URL}/agent/regenerate/subtopic`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -637,7 +640,7 @@ export const regenerateTask = async (
 ) => {
   const token = await getToken();
   
-  const response = await fetch(`http://localhost:8000/agent/regenerate/task`, {
+  const response = await fetch(`${API_BASE_URL}/agent/regenerate/task`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -673,7 +676,7 @@ export const verifyTask = async (
     throw new Error("No authentication token available");
   }
 
-  const response = await fetch(`http://localhost:8000/projects/${projectId}/tasks/${taskId.toString()}/verify`, {
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId.toString()}/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -707,7 +710,7 @@ export const updateTaskStatus = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -751,7 +754,7 @@ export const checkDayCompletion = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch(`http://localhost:8000/projects/${projectId}/days/progress`, {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/progress`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

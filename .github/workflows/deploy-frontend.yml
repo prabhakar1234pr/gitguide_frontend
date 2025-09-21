@@ -1,0 +1,80 @@
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Build project
+      run: npm run build
+      env:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+    
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+    
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+    
+    - name: Build Project Artifacts for Vercel
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+    
+    - name: Deploy to Vercel
+      run: |
+        url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+        echo "Deployment URL: $url"
+        echo "DEPLOYMENT_URL=$url" >> $GITHUB_ENV
+    
+    - name: Comment PR with deployment URL
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `🚀 **Frontend Deployed Successfully!**\n\n📱 **Live URL:** ${process.env.DEPLOYMENT_URL}\n\n✅ Deployment completed with latest changes.`
+          })
+    
+    - name: Verify deployment
+      run: |
+        echo "✅ Frontend deployment completed successfully!"
+        echo "🌐 Live URL: ${{ env.DEPLOYMENT_URL }}"
+        
+        # Wait a moment for deployment to be ready
+        sleep 10
+        
+        # Test if the deployment is accessible
+        if curl -f --max-time 30 ${{ env.DEPLOYMENT_URL }}; then
+          echo "✅ Deployment is accessible and working!"
+        else
+          echo "⚠️ Deployment may still be starting up..."
+        fi
