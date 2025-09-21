@@ -45,6 +45,10 @@ jobs:
     
     - name: Build Project Artifacts for Vercel
       run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
     
     - name: Deploy to Vercel
       run: |
