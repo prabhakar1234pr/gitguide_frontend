@@ -70,7 +70,14 @@ export default function ProgressDashboard({ projectId, className = "" }: Progres
         let completedDays = 0;
 
         // Process days data
-        const daysStats = (daysData.days || []).map((day: any) => {
+        const daysStats = (daysData.days || []).map((day: {
+          day_number: number;
+          name: string;
+          is_unlocked: boolean;
+          is_completed: boolean;
+          total_tasks?: number;
+          completed_tasks?: number;
+        }) => {
           const dayTotalTasks = day.total_tasks || 0;
           const dayCompletedTasks = day.completed_tasks || 0;
           const dayProgress = dayTotalTasks > 0 ? (dayCompletedTasks / dayTotalTasks) * 100 : 0;
@@ -92,13 +99,23 @@ export default function ProgressDashboard({ projectId, className = "" }: Progres
         });
 
         // Process concepts data
-        const conceptsStats = (conceptsData.concepts || []).map((concept: any) => {
+        const conceptsStats = (conceptsData.concepts || []).map((concept: {
+          id: string;
+          name: string;
+          day_number?: number;
+          subconcepts?: Array<{
+            task?: { status?: string };
+          }>;
+          subTopics?: Array<{
+            tasks?: Array<{ status?: string }>;
+          }>;
+        }) => {
           let conceptTotalTasks = 0;
           let conceptCompletedTasks = 0;
 
           // Count tasks in subconcepts (new structure) or subtopics (legacy)
           if (concept.subconcepts && concept.subconcepts.length > 0) {
-            concept.subconcepts.forEach((subconcept: any) => {
+            concept.subconcepts.forEach((subconcept) => {
               if (subconcept.task) {
                 conceptTotalTasks++;
                 if (subconcept.task.status === 'completed') {
@@ -107,10 +124,10 @@ export default function ProgressDashboard({ projectId, className = "" }: Progres
               }
             });
           } else if (concept.subTopics && concept.subTopics.length > 0) {
-            concept.subTopics.forEach((subtopic: any) => {
+            concept.subTopics.forEach((subtopic) => {
               if (subtopic.tasks) {
                 conceptTotalTasks += subtopic.tasks.length;
-                conceptCompletedTasks += subtopic.tasks.filter((task: any) => task.status === 'completed').length;
+                conceptCompletedTasks += subtopic.tasks.filter((task) => task.status === 'completed').length;
               }
             });
           }

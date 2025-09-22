@@ -15,7 +15,6 @@ interface Project {
 
 interface ProjectDetailHeaderProps {
   project: Project;
-  completionPercentage: number;
   processingStatus: string;
   totalTasks?: number;
   completedTasks?: number;
@@ -23,7 +22,6 @@ interface ProjectDetailHeaderProps {
 
 export default function ProjectDetailHeader({ 
   project, 
-  completionPercentage, 
   processingStatus, 
   totalTasks = 0, 
   completedTasks = 0 
