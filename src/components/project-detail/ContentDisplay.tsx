@@ -27,6 +27,27 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
   const [verificationError, setVerificationError] = useState('');
   const [verificationSuccess, setVerificationSuccess] = useState(false);
 
+  // Extract learning points from description for project overview
+  const extractLearningPoints = (description: string) => {
+    if (selectedContent.type !== 'project') return null;
+    
+    // Look for bullet points or numbered lists in the description
+    const lines = description.split('\n');
+    const learningPoints: string[] = [];
+    
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      // Match bullet points, dashes, asterisks, or numbered items
+      if (trimmed.match(/^[-*•]\s+(.+)/) || trimmed.match(/^\d+\.\s+(.+)/)) {
+        learningPoints.push(trimmed.replace(/^[-*•]\s+|^\d+\.\s+/, ''));
+      }
+    });
+
+    return learningPoints.length > 0 ? learningPoints : null;
+  };
+
+  const learningPoints = extractLearningPoints(selectedContent.description);
+
   const handleVerification = async () => {
     if (!verificationInput.trim()) {
       setVerificationError('Please enter a URL');
@@ -128,14 +149,94 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
     }
   };
 
+  if (selectedContent.type === 'project') {
+    // Enhanced Project Overview Layout
+    return (
+      <div className="space-y-6">
+        {/* Project Overview Header */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/20 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            {getIcon()}
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-white">{selectedContent.title}</h1>
+              <p className="text-zinc-300 mt-1">Comprehensive project breakdown and learning objectives</p>
+            </div>
+          </div>
+          
+          <div className="border-t border-white/20 pt-6">
+            <div className="prose lg:prose-lg max-w-3xl text-zinc-100 leading-relaxed">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-4 last:mb-0 text-zinc-200 leading-relaxed">{children}</p>,
+                  h1: ({ children }) => <h1 className="text-xl font-bold mb-4 text-white">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-lg font-bold mb-3 text-white">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-base font-bold mb-2 text-white">{children}</h3>,
+                  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+                  code: ({ children, className }) => {
+                    const isInline = !className;
+                    return isInline ? (
+                      <code className="bg-zinc-800/50 text-indigo-300 px-1.5 py-0.5 rounded text-sm font-mono">
+                        {children}
+                      </code>
+                    ) : (
+                      <code className="block bg-zinc-800/50 text-green-300 p-4 rounded-lg font-mono text-sm overflow-x-auto border border-zinc-700/50">
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {selectedContent.description}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+
+        {/* What You'll Learn Section */}
+        {learningPoints && learningPoints.length > 0 && (
+          <div className="bg-indigo-500/10 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-indigo-500/20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-white">What You'll Learn</h2>
+            </div>
+            
+            <ul className="space-y-3">
+              {learningPoints.map((point, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                    <svg className="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-zinc-200 leading-relaxed">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Regular content layout for concepts, subconcepts, tasks
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/20 shadow-lg">
+      <div className="flex items-center gap-4 mb-6">
         {getIcon()}
-        <h2 className="text-2xl font-bold text-white">{selectedContent.title}</h2>
+        <div>
+          <h2 className="text-xl lg:text-2xl font-bold text-white">{selectedContent.title}</h2>
+          <p className="text-zinc-300 mt-1 text-sm">
+            {selectedContent.type.charAt(0).toUpperCase() + selectedContent.type.slice(1)} • Learning Material
+          </p>
+        </div>
       </div>
       
-      <div className="text-gray-300 leading-relaxed prose prose-invert max-w-none">
+      <div className="border-t border-white/20 pt-6">
+        <div className="prose lg:prose-lg max-w-3xl text-zinc-100 leading-relaxed">
         <ReactMarkdown
           components={{
             // Custom styling for markdown elements in content display
@@ -192,6 +293,7 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
         >
           {selectedContent.description}
         </ReactMarkdown>
+        </div>
       </div>
       
       {/* Task Verification Section */}

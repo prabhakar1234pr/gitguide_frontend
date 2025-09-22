@@ -313,43 +313,194 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
     );
   }
 
+  const getRepositoryName = () => {
+    if (project?.repo_name) {
+      return project.repo_name;
+    }
+    if (project?.repo_url) {
+      const urlParts = project.repo_url.split('/');
+      return urlParts[urlParts.length - 1] || 'Repository';
+    }
+    return 'Repository';
+  };
+
+  const getRepositoryOwner = () => {
+    if (project?.repo_url) {
+      const urlParts = project.repo_url.split('/');
+      if (urlParts.length >= 2) {
+        return urlParts[urlParts.length - 2];
+      }
+    }
+    return '';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="flex h-screen">
-        {/* Left Sidebar - Learning Path */}
-        <div className="w-96 flex-shrink-0">
-          <ConceptsSidebarModular
-            projectId={projectId}
-            onContentSelect={handleContentSelect}
-            activeDayNumber={activeDayNumber}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
+      {/* Global Container */}
+      <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-8">
+        {/* Breadcrumb */}
+        <nav className="mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-2 text-sm text-zinc-400">
+            <li>GitGuide</li>
+            <li className="before:content-['/'] before:mx-2">Project</li>
+            <li className="before:content-['/'] before:mx-2 text-white font-medium">{getRepositoryName()}</li>
+          </ol>
+        </nav>
+
+        {/* Hero Header Card */}
+        <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 md:p-8 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {/* Left: Project Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl lg:text-3xl font-bold text-white truncate">{getRepositoryName()}</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-zinc-300">by</span>
+                    <a href={project?.repo_url} target="_blank" rel="noopener noreferrer" 
+                       className="text-indigo-400 hover:text-indigo-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 rounded">
+                      {getRepositoryOwner()}
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Meta Badges */}
+              <div className="flex flex-wrap gap-3">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-zinc-100/10 dark:bg-zinc-800/50 text-zinc-200 border border-zinc-700/50">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {project?.skill_level || 'Beginner'}
+                </span>
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-zinc-100/10 dark:bg-zinc-800/50 text-zinc-200 border border-zinc-700/50">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  {project?.domain || 'Full Stack'}
+                </span>
+                {project?.is_processed && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/50">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Learning Path Ready
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Progress & CTA */}
+            <div className="flex items-center gap-6">
+              {/* Circular Progress */}
+              <div className="text-center">
+                <div className="relative w-20 h-20">
+                  <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="url(#gradient)"
+                      strokeWidth="2"
+                      strokeDasharray={`${totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}, 100`}
+                      strokeLinecap="round"
+                    />
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="100%" stopColor="#8b5cf6" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold text-white">
+                      {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 text-sm text-zinc-300">
+                  {completedTasks} of {totalTasks} tasks
+                </div>
+              </div>
+
+              {/* Primary CTA */}
+              {project?.is_processed ? (
+                <a
+                  href={project.repo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View Repository
+                </a>
+              ) : (
+                <button
+                  onClick={handleGenerateLearningPath}
+                  disabled={isProcessing}
+                  className="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                >
+                  {isProcessing ? (
+                    <>
+                      <svg className="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
+                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Start Journey
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Expanded Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Compact Header */}
-          <div className="flex-shrink-0">
-            <ProjectDetailHeader
-              project={project}
-              processingStatus={processingStatus}
-              totalTasks={totalTasks}
-              completedTasks={completedTasks}
-            />
-          </div>
-          
-          {/* Compact 14-Day Learning Progression Toggle */}
-          {project.is_processed && (
-            <div className="flex-shrink-0 px-6 py-3 border-b border-white/10">
-              {/* Compact Toggle Button */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-white">Learning Progression</h3>
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Sidebar - Concepts */}
+          <aside className="col-span-12 xl:col-span-3" role="navigation" aria-label="Learning path navigation">
+            <div className="sticky top-20">
+              <ConceptsSidebarModular
+                projectId={projectId}
+                onContentSelect={handleContentSelect}
+                activeDayNumber={activeDayNumber}
+              />
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="col-span-12 xl:col-span-9 min-w-0">
+            {/* Learning Progression Toggle */}
+            {project?.is_processed && (
+              <div className="mb-6">
                 <button
                   onClick={() => setIsDayProgressVisible(!isDayProgressVisible)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-sm"
+                  className="flex items-center justify-between w-full p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                  aria-expanded={isDayProgressVisible}
+                  aria-controls="learning-progression"
                 >
-                  <span>{isDayProgressVisible ? 'Hide' : 'Show'} Journey</span>
+                  <span className="text-lg font-semibold text-white">Learning Progression</span>
                   <svg 
-                    className={`w-3 h-3 transition-transform ${isDayProgressVisible ? 'rotate-180' : ''}`} 
+                    className={`w-5 h-5 text-white transition-transform ${isDayProgressVisible ? 'rotate-180' : ''}`} 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -357,56 +508,53 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
+                
+                {/* Collapsible Progression */}
+                {isDayProgressVisible && (
+                  <div id="learning-progression" className="mt-4 animate-in slide-in-from-top-2 duration-300">
+                    <DaysProgressBar 
+                      projectId={projectId} 
+                      onActiveDayChange={setActiveDayNumber} 
+                    />
+                  </div>
+                )}
               </div>
-              
-              {/* Collapsible Day Progression Bar */}
-              {isDayProgressVisible && (
-                <div className="mt-3 animate-in slide-in-from-top-2 duration-300">
-                  <DaysProgressBar 
-                    projectId={projectId} 
-                    onActiveDayChange={setActiveDayNumber} 
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Expanded Content Area */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-8 max-w-none">
-              {project.is_processed ? (
+            )}
+
+            {/* Content Display */}
+            <div className="space-y-6">
+              {project?.is_processed ? (
                 selectedContent ? (
-                <div className="max-w-4xl mx-auto">
                   <ContentDisplay
                     selectedContent={selectedContent}
                     onVerifyTask={handleVerifyTask}
                     projectId={projectId}
                   />
-                </div>
                 ) : (
-                  <div className="max-w-4xl mx-auto">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-12 border border-white/20 shadow-2xl text-center">
-                      <div className="text-gray-400 text-xl mb-4">
-                        📚 Select an item from the learning path to view details
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-12 text-center">
+                    <div className="max-w-md mx-auto">
+                      <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
                       </div>
-                      <div className="text-gray-500 text-sm">
-                        Click on any concept, subconcept, or task in the sidebar to start learning
-                      </div>
+                      <h2 className="text-xl font-semibold text-white mb-3">Select a Learning Topic</h2>
+                      <p className="text-zinc-300 text-sm leading-relaxed">
+                        Choose any concept, subconcept, or task from the learning path to begin your journey
+                      </p>
                     </div>
                   </div>
                 )
               ) : (
-                <div className="max-w-4xl mx-auto">
-                  <LearningPathGenerator
-                    isProcessing={isProcessing}
-                    processingStatus={processingStatus}
-                    agentError={agentError}
-                    onGenerateClick={handleGenerateLearningPath}
-                  />
-                </div>
+                <LearningPathGenerator
+                  isProcessing={isProcessing}
+                  processingStatus={processingStatus}
+                  agentError={agentError}
+                  onGenerateClick={handleGenerateLearningPath}
+                />
               )}
             </div>
-          </div>
+          </main>
         </div>
       </div>
 
