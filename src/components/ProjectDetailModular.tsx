@@ -474,10 +474,10 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         </div>
 
         {/* Main Grid Layout */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-6 min-h-[calc(100vh-12rem)]">
           {/* Left Sidebar - Concepts */}
-          <aside className="col-span-12 xl:col-span-3" role="navigation" aria-label="Learning path navigation">
-            <div className="sticky top-20 h-[calc(100vh-8rem)] overflow-y-auto">
+          <aside className="col-span-12 xl:col-span-3 h-full" role="navigation" aria-label="Learning path navigation">
+            <div className="h-full">
               <ConceptsSidebarModular
                 projectId={projectId}
                 onContentSelect={handleContentSelect}
@@ -487,7 +487,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
           </aside>
 
           {/* Main Content Area */}
-          <main className="col-span-12 xl:col-span-9 min-w-0">
+          <main className="col-span-12 xl:col-span-9 min-w-0 h-full">
             {/* Learning Progression Toggle */}
             {project?.is_processed && (
               <div className="mb-6">

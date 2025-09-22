@@ -240,7 +240,7 @@ export default function ConceptsSidebarModular({
 
   return (
     <>
-      <div className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl flex flex-col h-full">
+      <div className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl flex flex-col min-h-[calc(100vh-12rem)]">
         <LearningPathHeader
           projectDomain={''} // projectDomain is no longer a prop
           skillLevel={''} // skillLevel is no longer a prop
