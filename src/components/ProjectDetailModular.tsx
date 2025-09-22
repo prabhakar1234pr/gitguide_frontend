@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import ConceptsSidebarModular from './ConceptsSidebarModular';
 import FloatingChatWidget from './FloatingChatWidget';
-import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
 import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
 import DaysProgressBar from './DaysProgressBar';
