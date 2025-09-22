@@ -42,7 +42,7 @@ export default function FloatingChatWidget({ projectId, activeDayNumber }: Float
   const [isTyping, setIsTyping] = useState(false);
   const [chatHealth, setChatHealth] = useState<ChatHealth | null>(null);
   const [contextInfo, setContextInfo] = useState<ContextInfo | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -163,7 +163,7 @@ export default function FloatingChatWidget({ projectId, activeDayNumber }: Float
 
   return (
     <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-      isExpanded ? 'w-96 h-[600px]' : 'w-80 h-96'
+      isExpanded ? 'w-96 h-[calc(100vh-12rem)]' : 'w-80 h-96'
     }`}>
       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl flex flex-col h-full">
         {/* Header */}
