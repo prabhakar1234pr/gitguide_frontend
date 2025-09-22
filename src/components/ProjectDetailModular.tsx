@@ -7,6 +7,7 @@ import ChatAssistant from './ChatAssistant';
 import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
 import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
+import DaysProgressBar from './DaysProgressBar';
 import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
 
 interface Project {
@@ -39,39 +40,63 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   const [agentError, setAgentError] = useState<string>('');
   const [selectedContent, setSelectedContent] = useState<SelectedContent | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [activeDayNumber, setActiveDayNumber] = useState<number>(0);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [completedTasks, setCompletedTasks] = useState(0);
 
   const calculateCompletionPercentage = useCallback(async (projectIdNum: number) => {
     try {
       const conceptsData = await getProjectConcepts(projectIdNum, getToken);
       
-      let totalTasks = 0;
-      let completedTasks = 0;
+      let totalTasksCount = 0;
+      let completedTasksCount = 0;
       
       const concepts = conceptsData.concepts || [];
       concepts.forEach((concept: unknown) => {
-        // Handle both 'subTopics' and 'subtopics' naming conventions
-        const conceptData = concept as { subTopics?: unknown[]; subtopics?: unknown[] };
-        const subtopics = conceptData.subTopics || conceptData.subtopics || [];
+        const conceptData = concept as { 
+          subTopics?: unknown[]; 
+          subtopics?: unknown[];
+          subconcepts?: unknown[];
+        };
         
-        subtopics.forEach((subtopic: unknown) => {
-          const subtopicData = subtopic as { tasks?: unknown[] };
-          const tasks = subtopicData.tasks || [];
-          totalTasks += tasks.length;
-          
-          tasks.forEach((task: unknown) => {
-            const taskData = task as { status?: string };
-            if (taskData.status === 'completed') {
-              completedTasks++;
+        // Handle new subconcept structure
+        if (conceptData.subconcepts) {
+          conceptData.subconcepts.forEach((subconcept: unknown) => {
+            const subconceptData = subconcept as { task?: { status?: string } };
+            if (subconceptData.task) {
+              totalTasksCount++;
+              if (subconceptData.task.status === 'completed') {
+                completedTasksCount++;
+              }
             }
           });
-        });
+        } else {
+          // Handle legacy subtopic structure
+          const subtopics = conceptData.subTopics || conceptData.subtopics || [];
+          subtopics.forEach((subtopic: unknown) => {
+            const subtopicData = subtopic as { tasks?: unknown[] };
+            const tasks = subtopicData.tasks || [];
+            totalTasksCount += tasks.length;
+            
+            tasks.forEach((task: unknown) => {
+              const taskData = task as { status?: string };
+              if (taskData.status === 'completed') {
+                completedTasksCount++;
+              }
+            });
+          });
+        }
       });
       
-      const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      const percentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
       setCompletionPercentage(percentage);
+      setTotalTasks(totalTasksCount);
+      setCompletedTasks(completedTasksCount);
     } catch (error) {
       console.error('Failed to calculate completion percentage:', error);
       setCompletionPercentage(0);
+      setTotalTasks(0);
+      setCompletedTasks(0);
     }
   }, [getToken]);
 
@@ -302,6 +327,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         <ConceptsSidebarModular
           projectId={projectId}
           onContentSelect={handleContentSelect}
+          activeDayNumber={activeDayNumber}
         />
 
         {/* Main Content Area */}
@@ -310,7 +336,19 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             project={project}
             completionPercentage={completionPercentage}
             processingStatus={processingStatus}
+            totalTasks={totalTasks}
+            completedTasks={completedTasks}
           />
+          
+          {/* 14-Day Learning Progression - Only show if project is processed */}
+          {project.is_processed && (
+            <div className="px-6 pt-4 pb-2 border-b border-white/10">
+              <DaysProgressBar 
+                projectId={projectId} 
+                onActiveDayChange={setActiveDayNumber} 
+              />
+            </div>
+          )}
           
           <div className="flex-1 p-6 overflow-y-auto">
             {project.is_processed ? (
@@ -339,7 +377,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         </div>
 
         {/* Right Sidebar - Chat Assistant */}
-        <ChatAssistant projectId={projectId} />
+        <ChatAssistant projectId={projectId} activeDayNumber={activeDayNumber} />
       </div>
     </div>
   );

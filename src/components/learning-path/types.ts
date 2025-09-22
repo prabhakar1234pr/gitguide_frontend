@@ -1,7 +1,7 @@
 // Shared types for learning path components
 
 export interface SelectedContent {
-  type: 'project' | 'concept' | 'subtopic' | 'task';
+  type: 'project' | 'concept' | 'subconcept' | 'subtopic' | 'task';
   title: string;
   description: string;
   verification_type?: string;
@@ -14,7 +14,18 @@ export interface Concept {
   name: string;
   description: string;
   isUnlocked: boolean;
-  subTopics: Subtopic[];
+  subTopics: Subtopic[]; // Legacy - for backward compatibility
+  subconcepts?: Subconcept[]; // New - for subconcept hierarchy
+  day_number?: number;
+}
+
+export interface Subconcept {
+  id: number;
+  name: string;
+  description: string;
+  isUnlocked: boolean;
+  isCompleted: boolean;
+  task: Task; // Each subconcept has exactly 1 task
 }
 
 export interface Subtopic {

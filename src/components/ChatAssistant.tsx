@@ -7,6 +7,7 @@ import { sendChatMessage, getChatContext, checkChatHealth } from '../../services
 
 interface ChatAssistantProps {
   projectId: string;
+  activeDayNumber?: number;
 }
 
 interface Message {
@@ -31,9 +32,10 @@ interface ContextInfo {
   repo_files_count: number;
   concepts_count: number;
   current_task: string | null;
+  project_name?: string;
 }
 
-export default function ChatAssistant({ projectId }: ChatAssistantProps) {
+export default function ChatAssistant({ projectId, activeDayNumber }: ChatAssistantProps) {
   const { getToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -53,13 +55,17 @@ export default function ChatAssistant({ projectId }: ChatAssistantProps) {
         const context = await getChatContext(parseInt(projectId), getToken);
         setContextInfo(context);
 
-        // Set initial welcome message
+        // Set initial welcome message with day context
+        const dayContextMessage = activeDayNumber !== undefined 
+          ? `You're currently on Day ${activeDayNumber}. ` 
+          : '';
+        
         const welcomeMessage: Message = {
           id: '1',
           type: 'assistant',
           content: context.is_processed 
-            ? `Hi! I'm your AI learning assistant with full knowledge of the **${context.project_name}** repository. I have access to ${context.repo_files_count} source files, ${context.concepts_count} learning concepts, and your current progress. ${context.current_task ? `You're working on: "${context.current_task}". ` : ''}Ask me anything about the code, concepts, or learning path!`
-            : `Hi! I'm your AI learning assistant. I see you haven't generated a learning path for **${context.project_name}** yet. Once you process the repository, I'll have full access to the codebase and can provide detailed, context-aware guidance. For now, I can help with general questions!`,
+            ? `Hi! I'm your AI learning assistant with full knowledge of the **${context.project_name || 'this'}** repository. I have access to ${context.repo_files_count} source files, ${context.concepts_count} learning concepts, and your current progress. ${dayContextMessage}${context.current_task ? `You're working on: "${context.current_task}". ` : ''}Ask me anything about the code, concepts, or learning path!`
+            : `Hi! I'm your AI learning assistant. I see you haven't generated a learning path for **${context.project_name || 'this'}** yet. Once you process the repository, I'll have full access to the codebase and can provide detailed, context-aware guidance. For now, I can help with general questions!`,
           timestamp: new Date()
         };
         setMessages([welcomeMessage]);
@@ -77,7 +83,7 @@ export default function ChatAssistant({ projectId }: ChatAssistantProps) {
     };
 
     initializeChat();
-  }, [projectId, getToken]);
+  }, [projectId, getToken, activeDayNumber]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -155,6 +161,7 @@ export default function ChatAssistant({ projectId }: ChatAssistantProps) {
               <div className="text-xs text-gray-400 space-y-1">
                 <div>📁 {contextInfo.repo_files_count} files analyzed</div>
                 <div>🎯 {contextInfo.concepts_count} concepts generated</div>
+                {activeDayNumber !== undefined && <div>📅 Active Day: {activeDayNumber}</div>}
                 {contextInfo.current_task && <div>📝 Current: {contextInfo.current_task}</div>}
               </div>
             ) : (

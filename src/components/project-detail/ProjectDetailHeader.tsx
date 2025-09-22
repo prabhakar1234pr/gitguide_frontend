@@ -1,5 +1,7 @@
 "use client";
 
+import ProgressIndicator from '../ProgressIndicator';
+
 interface Project {
   project_id: string;
   repo_url: string;
@@ -15,9 +17,17 @@ interface ProjectDetailHeaderProps {
   project: Project;
   completionPercentage: number;
   processingStatus: string;
+  totalTasks?: number;
+  completedTasks?: number;
 }
 
-export default function ProjectDetailHeader({ project, completionPercentage, processingStatus }: ProjectDetailHeaderProps) {
+export default function ProjectDetailHeader({ 
+  project, 
+  completionPercentage, 
+  processingStatus, 
+  totalTasks = 0, 
+  completedTasks = 0 
+}: ProjectDetailHeaderProps) {
   const getRepositoryName = () => {
     if (project.repo_name) {
       return project.repo_name;
@@ -105,10 +115,10 @@ export default function ProjectDetailHeader({ project, completionPercentage, pro
           )}
         </div>
 
-        {/* Processing Status */}
+        {/* Progress and Status */}
         <div className="text-right">
           {project.is_processed ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex items-center gap-2 text-green-400">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -116,17 +126,25 @@ export default function ProjectDetailHeader({ project, completionPercentage, pro
                 <span className="font-medium">Learning Path Ready</span>
               </div>
               
-              {completionPercentage > 0 && (
-                <div className="text-sm text-gray-400">
-                  Progress: {completionPercentage}% complete
-                </div>
-              )}
+              {/* Enhanced Progress Indicator */}
+              <ProgressIndicator 
+                completedTasks={completedTasks}
+                totalTasks={totalTasks}
+                size="md"
+                showText={false}
+                className="justify-end"
+              />
               
-              {processingStatus && (
-                <div className="text-xs text-gray-500">
-                  {processingStatus}
+              <div className="text-center">
+                <div className="text-sm text-gray-300 font-medium">
+                  {completedTasks} of {totalTasks} tasks
                 </div>
-              )}
+                {processingStatus && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {processingStatus}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-yellow-400">

@@ -321,7 +321,7 @@ export const triggerAgentProcessing = async (
       throw new Error("No authentication token available");
     }
 
-    const response = await fetch("${API_BASE_URL}/agent/process", {
+    const response = await fetch(`${API_BASE_URL}/agent/process`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -374,7 +374,7 @@ export const getAgentStatus = async (
 
 export const checkAgentHealth = async () => {
   try {
-    const response = await fetch("${API_BASE_URL}/agent/health", {
+    const response = await fetch(`${API_BASE_URL}/agent/health`, {
       method: "GET",
     });
 
@@ -458,7 +458,7 @@ export const getChatContext = async (
 
 export const checkChatHealth = async () => {
   try {
-    const response = await fetch("${API_BASE_URL}/chat/health", {
+    const response = await fetch(`${API_BASE_URL}/chat/health`, {
       method: "GET",
     });
 

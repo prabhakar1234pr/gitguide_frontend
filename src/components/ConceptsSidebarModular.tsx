@@ -7,16 +7,18 @@ import RegenerateModal from './RegenerateModal';
 import LearningPathHeader from './learning-path/LearningPathHeader';
 import ProjectOverviewCard from './learning-path/ProjectOverviewCard';
 import ConceptsList from './learning-path/ConceptsList';
-import { Concept, Subtopic, Task, SelectedContent, RegenerateState } from './learning-path/types';
+import { Concept, Subconcept, Subtopic, Task, SelectedContent, RegenerateState } from './learning-path/types';
 
 interface ConceptsSidebarProps {
   projectId: string;
   onContentSelect: (content: SelectedContent) => void;
+  activeDayNumber?: number;
 }
 
 export default function ConceptsSidebarModular({ 
   projectId,
-  onContentSelect
+  onContentSelect,
+  activeDayNumber
 }: ConceptsSidebarProps) {
   const { getToken, isLoaded } = useAuth();
   const [concepts, setConcepts] = useState<Concept[]>([]);
@@ -32,7 +34,7 @@ export default function ConceptsSidebarModular({
     description: ''
   });
 
-  // Load concepts on component mount
+  // Load concepts when component mounts or active day changes
   useEffect(() => {
     const loadConcepts = async () => {
       if (!isLoaded || !projectId) return;
@@ -47,7 +49,10 @@ export default function ConceptsSidebarModular({
           return;
         }
 
-        const data = await getProjectConcepts(projectIdNum, getToken);
+        const data = await getProjectConcepts(projectIdNum, getToken, { 
+          activeDay: activeDayNumber || 0, 
+          includePast: false 
+        });
         
         if (data.concepts && Array.isArray(data.concepts)) {
           setConcepts(data.concepts);
@@ -75,7 +80,7 @@ export default function ConceptsSidebarModular({
     };
 
     loadConcepts();
-  }, [isLoaded, projectId, getToken]);
+  }, [isLoaded, projectId, getToken, activeDayNumber]);
 
   // Event handlers
   const handleProjectOverviewClick = () => {
@@ -91,6 +96,14 @@ export default function ConceptsSidebarModular({
       type: 'concept',
       title: concept.name,
       description: concept.description
+    });
+  };
+
+  const handleSubconceptClick = (subconcept: Subconcept) => {
+    onContentSelect({
+      type: 'subconcept',
+      title: subconcept.name,
+      description: subconcept.description
     });
   };
 
@@ -252,6 +265,7 @@ export default function ConceptsSidebarModular({
             onToggleConceptExpansion={toggleConceptExpansion}
             onToggleSubtopicExpansion={toggleSubtopicExpansion}
             onRegenerateConcept={handleRegenerateConcept}
+            onSubconceptClick={handleSubconceptClick}
             onSubtopicClick={handleSubtopicClick}
             onRegenerateSubtopic={handleRegenerateSubtopic}
             onTaskClick={handleTaskClick}

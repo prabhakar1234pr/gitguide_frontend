@@ -1,6 +1,6 @@
 "use client";
 
-import { Concept, Subtopic, Task } from './types';
+import { Concept, Subconcept, Subtopic, Task } from './types';
 import ConceptCard from './ConceptCard';
 
 interface ConceptsListProps {
@@ -13,6 +13,7 @@ interface ConceptsListProps {
   onToggleConceptExpansion: (conceptId: number | string) => void;
   onToggleSubtopicExpansion: (subtopicId: number | string) => void;
   onRegenerateConcept: (concept: Concept, conceptId: string) => void;
+  onSubconceptClick?: (subconcept: Subconcept, subconceptIndex: number) => void;
   onSubtopicClick: (subtopic: Subtopic, conceptIndex: number, subtopicIndex: number) => void;
   onRegenerateSubtopic: (subtopic: Subtopic, conceptId: string, subtopicId: string) => void;
   onTaskClick: (task: Task) => void;
@@ -29,6 +30,7 @@ export default function ConceptsList({
   onToggleConceptExpansion,
   onToggleSubtopicExpansion,
   onRegenerateConcept,
+  onSubconceptClick,
   onSubtopicClick,
   onRegenerateSubtopic,
   onTaskClick,
@@ -66,6 +68,7 @@ export default function ConceptsList({
               onToggleConceptExpansion={onToggleConceptExpansion}
               onToggleSubtopicExpansion={onToggleSubtopicExpansion}
               onRegenerateConcept={onRegenerateConcept}
+              onSubconceptClick={onSubconceptClick}
               onSubtopicClick={onSubtopicClick}
               onRegenerateSubtopic={onRegenerateSubtopic}
               onTaskClick={onTaskClick}
