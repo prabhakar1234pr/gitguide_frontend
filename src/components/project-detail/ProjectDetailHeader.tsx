@@ -55,10 +55,10 @@ export default function ProjectDetailHeader({
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border-b border-white/10 px-6 py-3">
+    <div className="bg-white/5 backdrop-blur-sm border-b border-white/10 px-6 py-2">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-1">
             <h1 className="text-xl font-bold text-white">{getRepositoryName()}</h1>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>by</span>
@@ -66,7 +66,7 @@ export default function ProjectDetailHeader({
             </div>
           </div>
           
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />

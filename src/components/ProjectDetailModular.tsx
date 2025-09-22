@@ -316,8 +316,8 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <div className="flex h-screen">
-        {/* Compact Left Sidebar - Learning Path */}
-        <div className="w-80 flex-shrink-0">
+        {/* Left Sidebar - Learning Path */}
+        <div className="w-96 flex-shrink-0">
           <ConceptsSidebarModular
             projectId={projectId}
             onContentSelect={handleContentSelect}

@@ -14,7 +14,7 @@ export default function LearningPathHeader({
   onRegenerateWholePath 
 }: LearningPathHeaderProps) {
   return (
-    <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/10 p-6 z-10">
+    <div className="sticky top-0 bg-white/10 backdrop-blur-sm border-b border-white/10 p-6 z-10">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Learning Path</h2>
