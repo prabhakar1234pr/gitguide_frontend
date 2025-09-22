@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectDays, verifyDay0Repository, refreshProjectProgress } from '../../services/api';
+import { getProjectDays, verifyDay0Repository, refreshProjectProgress, markDayCompleted } from '../../services/api';
 
 interface Day {
   day_id: number;
@@ -73,6 +73,25 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
   const refreshDaysData = async () => {
     console.log('🔄 Refreshing days progress...');
     await loadDays();
+  };
+
+  // Test function to manually force day completion check
+  const testDayCompletion = async (dayNumber: number) => {
+    try {
+      console.log(`🧪 Testing completion for Day ${dayNumber}...`);
+      const projectIdNum = parseInt(projectId);
+      
+      const result = await markDayCompleted(projectIdNum, dayNumber, getToken);
+      console.log(`✅ Day ${dayNumber} completion result:`, result);
+      
+      // Refresh data after manual completion
+      await refreshDaysData();
+      
+      alert(`Day ${dayNumber} completion test completed! Check console for details.`);
+    } catch (error) {
+      console.error(`❌ Failed to test Day ${dayNumber} completion:`, error);
+      alert(`Failed to test Day ${dayNumber} completion: ${error}`);
+    }
   };
 
   const handleDayClick = async (day: Day) => {
@@ -164,14 +183,21 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
   const getDayStyle = (day: Day) => {
     const baseStyle = "relative flex flex-col items-center p-2 rounded-lg border transition-all duration-200 cursor-pointer min-w-[80px]";
     
+    // Debug logging for day status
+    console.log(`🎨 Day ${day.day_number} styling: completed=${day.is_completed}, unlocked=${day.is_unlocked}, verified=${day.is_verified}`);
+    
     if (day.is_completed) {
-      return `${baseStyle} bg-green-500/20 border-green-400/50 hover:bg-green-500/30`;
+      // ✅ GREEN: Day is completed - all tasks verified/done
+      return `${baseStyle} bg-green-500/20 border-green-400/50 hover:bg-green-500/30 shadow-green-400/20 shadow-lg`;
     } else if (day.is_unlocked) {
       if (day.day_number === 0 && day.requires_verification && !day.is_verified) {
+        // 🟠 ORANGE: Day 0 needs verification setup
         return `${baseStyle} bg-orange-500/20 border-orange-400/50 hover:bg-orange-500/30 ring-2 ring-orange-400/30`;
       }
-      return `${baseStyle} bg-blue-500/20 border-blue-400/50 hover:bg-blue-500/30 ring-2 ring-blue-400/30`;
+      // 🔵 BLUE: Day is unlocked and active (current day)
+      return `${baseStyle} bg-blue-500/20 border-blue-400/50 hover:bg-blue-500/30 ring-2 ring-blue-400/30 shadow-blue-400/20 shadow-lg`;
     } else {
+      // ⚫ GRAY: Day is locked/not accessible yet
       return `${baseStyle} bg-gray-700/30 border-gray-600/50 cursor-not-allowed opacity-60`;
     }
   };
@@ -292,6 +318,22 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
             className="bg-gradient-to-r from-green-400 to-blue-400 h-2 rounded-full transition-all duration-300"
             style={{ width: `${(completedCount / 15) * 100}%` }}
           ></div>
+        </div>
+
+        {/* Debug: Manual Day Completion Test Button */}
+        <div className="flex gap-2 text-xs">
+          <button
+            onClick={() => testDayCompletion(0)}
+            className="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/50 rounded text-yellow-300 transition-colors"
+          >
+            🧪 Test Day 0 Completion
+          </button>
+          <button
+            onClick={() => refreshDaysData()}
+            className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/50 rounded text-blue-300 transition-colors"
+          >
+            🔄 Refresh Progress
+          </button>
         </div>
       </div>
 
