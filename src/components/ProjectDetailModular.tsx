@@ -477,7 +477,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         <div className="grid grid-cols-12 gap-6">
           {/* Left Sidebar - Concepts */}
           <aside className="col-span-12 xl:col-span-3" role="navigation" aria-label="Learning path navigation">
-            <div className="sticky top-20">
+            <div className="sticky top-20 h-[calc(100vh-8rem)] overflow-y-auto">
               <ConceptsSidebarModular
                 projectId={projectId}
                 onContentSelect={handleContentSelect}
