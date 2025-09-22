@@ -11,6 +11,9 @@ import DaysProgressBar from './DaysProgressBar';
 import { SelectedContent } from './learning-path/types';
 import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
 
+// API Base URL - uses environment variable or fallback to localhost
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface Project {
   project_id: string;
   repo_url: string;
@@ -108,7 +111,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         setLoading(true);
         const token = await getToken();
         
-        const projectResponse = await fetch(`http://localhost:8000/projects/${projectIdNum}`, {
+        const projectResponse = await fetch(`${API_BASE_URL}/projects/${projectIdNum}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
@@ -213,7 +216,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             
             // Reload project data
             console.log('📥 Reloading project data...');
-            const projectResponse = await fetch(`http://localhost:8000/projects/${projectIdNum}`, {
+            const projectResponse = await fetch(`${API_BASE_URL}/projects/${projectIdNum}`, {
               headers: {
                 "Authorization": `Bearer ${await getToken()}`,
               },
