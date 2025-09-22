@@ -37,7 +37,7 @@ export default function ProjectOverviewSection({ projectId }: ProjectOverviewSec
         }
 
         console.log(`📋 Fetching project overview for project ${projectId}`);
-        const response = await fetch(`http://localhost:8000/projects/${projectIdNum}`, {
+        const response = await fetch(`https://gitguide-backend.onrender.com/projects/${projectIdNum}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },

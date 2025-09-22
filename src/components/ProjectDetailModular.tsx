@@ -9,10 +9,7 @@ import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
 import DaysProgressBar from './DaysProgressBar';
 import { SelectedContent } from './learning-path/types';
-import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
-
-// API Base URL - uses environment variable or fallback to localhost
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { triggerAgentProcessing, getAgentStatus, getProjectConcepts, API_BASE_URL } from '../../services/api';
 
 interface Project {
   project_id: string;

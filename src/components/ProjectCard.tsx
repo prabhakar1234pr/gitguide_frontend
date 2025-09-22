@@ -58,7 +58,7 @@ export default function ProjectCard({ projectId, repoUrl, skillLevel, domain, cr
       setIsDeleting(true);
       const token = await getToken();
       
-      const response = await fetch(`http://localhost:8000/projects/${projectId}`, {
+      const response = await fetch(`https://gitguide-backend.onrender.com/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

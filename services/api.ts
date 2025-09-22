@@ -2,7 +2,14 @@
 import { auth } from '@clerk/nextjs/server';
 
 // API Base URL - uses environment variable or fallback to localhost
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// For production, always use the Render backend URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+    ? "https://gitguide-backend.onrender.com" 
+    : "http://localhost:8000");
+
+// Export API_BASE_URL for use in other components
+export { API_BASE_URL };
 // ----------------------------- PROJECT API FUNCTIONS -----------------------------
 // For client-side API calls
 export const createProject = async (

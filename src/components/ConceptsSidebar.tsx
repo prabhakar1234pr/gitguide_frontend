@@ -133,7 +133,7 @@ export default function ConceptsSidebar({
         }
 
         // Load project overview
-        const projectResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/projects/${projectIdNum}`, {
+        const projectResponse = await fetch(`https://gitguide-backend.onrender.com/projects/${projectIdNum}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },

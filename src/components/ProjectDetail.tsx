@@ -113,7 +113,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         const token = await getToken();
         
         // Load project details from backend
-        const projectResponse = await fetch(`http://localhost:8000/projects/${projectIdNum}`, {
+        const projectResponse = await fetch(`https://gitguide-backend.onrender.com/projects/${projectIdNum}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },

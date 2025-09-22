@@ -62,7 +62,7 @@ export default function Dashboard() {
   const handleProjectSubmit = async (projectData: { repoUrl: string; skillLevel: string; domain: string }) => {
     try {
       const token = await getToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/projects`, {
+      const response = await fetch(`https://gitguide-backend.onrender.com/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
