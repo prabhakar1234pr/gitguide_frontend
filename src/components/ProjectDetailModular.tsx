@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import ConceptsSidebarModular from './ConceptsSidebarModular';
-import ChatAssistant from './ChatAssistant';
+import FloatingChatWidget from './FloatingChatWidget';
 import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
 import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
@@ -316,35 +316,40 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <div className="flex h-screen">
-        {/* Left Sidebar - Learning Path */}
-        <ConceptsSidebarModular
-          projectId={projectId}
-          onContentSelect={handleContentSelect}
-          activeDayNumber={activeDayNumber}
-        />
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
-          <ProjectDetailHeader
-            project={project}
-            processingStatus={processingStatus}
-            totalTasks={totalTasks}
-            completedTasks={completedTasks}
+        {/* Compact Left Sidebar - Learning Path */}
+        <div className="w-80 flex-shrink-0">
+          <ConceptsSidebarModular
+            projectId={projectId}
+            onContentSelect={handleContentSelect}
+            activeDayNumber={activeDayNumber}
           />
+        </div>
+
+        {/* Expanded Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Compact Header */}
+          <div className="flex-shrink-0">
+            <ProjectDetailHeader
+              project={project}
+              processingStatus={processingStatus}
+              totalTasks={totalTasks}
+              completedTasks={completedTasks}
+            />
+          </div>
           
-          {/* 14-Day Learning Progression Toggle - Only show if project is processed */}
+          {/* Compact 14-Day Learning Progression Toggle */}
           {project.is_processed && (
-            <div className="px-6 pt-4 pb-2 border-b border-white/10">
-              {/* Toggle Button */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Learning Progression</h3>
+            <div className="flex-shrink-0 px-6 py-3 border-b border-white/10">
+              {/* Compact Toggle Button */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-white">Learning Progression</h3>
                 <button
                   onClick={() => setIsDayProgressVisible(!isDayProgressVisible)}
-                  className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-sm"
                 >
-                  <span>{isDayProgressVisible ? 'Hide' : 'Show'} 14-Day Journey</span>
+                  <span>{isDayProgressVisible ? 'Hide' : 'Show'} Journey</span>
                   <svg 
-                    className={`w-4 h-4 transition-transform ${isDayProgressVisible ? 'rotate-180' : ''}`} 
+                    className={`w-3 h-3 transition-transform ${isDayProgressVisible ? 'rotate-180' : ''}`} 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -356,7 +361,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
               
               {/* Collapsible Day Progression Bar */}
               {isDayProgressVisible && (
-                <div className="animate-in slide-in-from-top-2 duration-300">
+                <div className="mt-3 animate-in slide-in-from-top-2 duration-300">
                   <DaysProgressBar 
                     projectId={projectId} 
                     onActiveDayChange={setActiveDayNumber} 
@@ -366,35 +371,47 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             </div>
           )}
           
-          <div className="flex-1 p-6 overflow-y-auto">
-            {project.is_processed ? (
-              selectedContent ? (
-              <ContentDisplay
-                selectedContent={selectedContent}
-                onVerifyTask={handleVerifyTask}
-                  projectId={projectId}
-              />
-              ) : (
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl text-center">
-                  <div className="text-gray-400 text-lg">
-                    Select an item from the learning path to view details
-                  </div>
+          {/* Expanded Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-8 max-w-none">
+              {project.is_processed ? (
+                selectedContent ? (
+                <div className="max-w-4xl mx-auto">
+                  <ContentDisplay
+                    selectedContent={selectedContent}
+                    onVerifyTask={handleVerifyTask}
+                    projectId={projectId}
+                  />
                 </div>
-              )
-            ) : (
-              <LearningPathGenerator
-                isProcessing={isProcessing}
-                processingStatus={processingStatus}
-                agentError={agentError}
-                onGenerateClick={handleGenerateLearningPath}
-              />
-            )}
+                ) : (
+                  <div className="max-w-4xl mx-auto">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-12 border border-white/20 shadow-2xl text-center">
+                      <div className="text-gray-400 text-xl mb-4">
+                        📚 Select an item from the learning path to view details
+                      </div>
+                      <div className="text-gray-500 text-sm">
+                        Click on any concept, subconcept, or task in the sidebar to start learning
+                      </div>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="max-w-4xl mx-auto">
+                  <LearningPathGenerator
+                    isProcessing={isProcessing}
+                    processingStatus={processingStatus}
+                    agentError={agentError}
+                    onGenerateClick={handleGenerateLearningPath}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Right Sidebar - Chat Assistant */}
-        <ChatAssistant projectId={projectId} activeDayNumber={activeDayNumber} />
       </div>
+
+      {/* Floating Chat Widget */}
+      <FloatingChatWidget projectId={projectId} activeDayNumber={activeDayNumber} />
     </div>
   );
 } 
