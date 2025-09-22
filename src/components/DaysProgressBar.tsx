@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectDays, verifyDay0Repository } from '../../services/api';
+import { getProjectDays, verifyDay0Repository, refreshProjectProgress } from '../../services/api';
 
 interface Day {
   day_id: number;
@@ -35,37 +35,45 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState('');
 
-  useEffect(() => {
-    const loadDays = async () => {
-      if (!isLoaded || !projectId) return;
+  const loadDays = useCallback(async () => {
+    if (!isLoaded || !projectId) return;
 
-      try {
-        setLoading(true);
-        setError('');
-        
-        const projectIdNum = parseInt(projectId);
-        if (isNaN(projectIdNum)) {
-          setError('Invalid project ID');
-          return;
-        }
-
-        const daysData = await getProjectDays(projectIdNum, getToken);
-        setDays(daysData.days || []);
-        setCurrentDay(daysData.current_day || null);
-        if (onActiveDayChange && daysData?.current_day?.day_number !== undefined) {
-          onActiveDayChange(daysData.current_day.day_number);
-        }
-        
-      } catch (error) {
-        console.error("Failed to load days:", error);
-        setError('Failed to load days');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      setError('');
+      
+      const projectIdNum = parseInt(projectId);
+      if (isNaN(projectIdNum)) {
+        setError('Invalid project ID');
+        return;
       }
-    };
 
-    loadDays();
+      const daysData = await getProjectDays(projectIdNum, getToken);
+      setDays(daysData.days || []);
+      setCurrentDay(daysData.current_day || null);
+      if (onActiveDayChange && daysData?.current_day?.day_number !== undefined) {
+        onActiveDayChange(daysData.current_day.day_number);
+      }
+      
+      console.log(`📅 Days loaded: ${daysData.completed_days}/${daysData.total_days} completed`);
+      
+    } catch (error) {
+      console.error("Failed to load days:", error);
+      setError('Failed to load days');
+    } finally {
+      setLoading(false);
+    }
   }, [isLoaded, projectId, getToken, onActiveDayChange]);
+
+  useEffect(() => {
+    loadDays();
+  }, [loadDays]);
+
+  // Function to refresh days data (can be called after task completion)
+  const refreshDaysData = async () => {
+    console.log('🔄 Refreshing days progress...');
+    await loadDays();
+  };
 
   const handleDayClick = async (day: Day) => {
     if (!day.is_unlocked) {
@@ -100,13 +108,20 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
       const result = await verifyDay0Repository(projectIdNum, repoUrl, getToken);
       
       if (result.success) {
+        // Force refresh all progress data after verification
+        try {
+          await refreshProjectProgress(projectIdNum, getToken);
+        } catch (progressError) {
+          console.warn('Failed to refresh progress data:', progressError);
+        }
+        
         // Reload days data to get updated state
-        const daysData = await getProjectDays(projectIdNum, getToken);
-        setDays(daysData.days || []);
-        setCurrentDay(daysData.current_day || null);
+        await refreshDaysData();
         
         setShowVerification(false);
         setRepoUrl('');
+        
+        console.log('✅ Day 0 verification completed and progress refreshed');
       } else {
         setVerificationError(result.error || 'Verification failed');
       }

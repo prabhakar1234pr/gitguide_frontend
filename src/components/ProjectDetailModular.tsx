@@ -8,7 +8,7 @@ import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
 import DaysProgressBar from './DaysProgressBar';
 import { SelectedContent } from './learning-path/types';
-import { triggerAgentProcessing, getAgentStatus, getProjectConcepts, API_BASE_URL } from '../../services/api';
+import { triggerAgentProcessing, getAgentStatus, getProjectConcepts, getProjectProgress, API_BASE_URL } from '../../services/api';
 
 interface Project {
   project_id: string;
@@ -39,58 +39,93 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   const [completedTasks, setCompletedTasks] = useState(0);
   const [isDayProgressVisible, setIsDayProgressVisible] = useState(false);
 
-  const calculateCompletionPercentage = useCallback(async (projectIdNum: number) => {
+  const loadProgressData = useCallback(async (projectIdNum: number) => {
+    try {
+      // Get real progress data from backend
+      const progressData = await getProjectProgress(projectIdNum, getToken);
+      
+      if (progressData.success && progressData.overall_progress) {
+        const overallProgress = progressData.overall_progress;
+        setTotalTasks(overallProgress.total_tasks || 0);
+        setCompletedTasks(overallProgress.completed_tasks || 0);
+        
+        console.log(`📊 Progress loaded: ${overallProgress.completed_tasks}/${overallProgress.total_tasks} tasks completed`);
+      } else {
+        console.warn('⚠️ No progress data available');
+        setTotalTasks(0);
+        setCompletedTasks(0);
+      }
+    } catch (error) {
+      console.error('Failed to load progress data:', error);
+      // Fallback: try to calculate from concepts if progress API fails
     try {
       const conceptsData = await getProjectConcepts(projectIdNum, getToken);
       
-      let totalTasksCount = 0;
-      let completedTasksCount = 0;
+        let totalTasksCount = 0;
+        let completedTasksCount = 0;
       
       const concepts = conceptsData.concepts || [];
       concepts.forEach((concept: unknown) => {
-        const conceptData = concept as { 
-          subTopics?: unknown[]; 
-          subtopics?: unknown[];
-          subconcepts?: unknown[];
-        };
-        
-        // Handle new subconcept structure
-        if (conceptData.subconcepts) {
-          conceptData.subconcepts.forEach((subconcept: unknown) => {
-            const subconceptData = subconcept as { task?: { status?: string } };
-            if (subconceptData.task) {
-              totalTasksCount++;
-              if (subconceptData.task.status === 'completed') {
-                completedTasksCount++;
-              }
-            }
-          });
-        } else {
-          // Handle legacy subtopic structure
-          const subtopics = conceptData.subTopics || conceptData.subtopics || [];
-          subtopics.forEach((subtopic: unknown) => {
-            const subtopicData = subtopic as { tasks?: unknown[] };
-            const tasks = subtopicData.tasks || [];
-            totalTasksCount += tasks.length;
-            
-            tasks.forEach((task: unknown) => {
-              const taskData = task as { status?: string };
-              if (taskData.status === 'completed') {
-                completedTasksCount++;
+          const conceptData = concept as { 
+            subTopics?: unknown[]; 
+            subtopics?: unknown[];
+            subconcepts?: unknown[];
+          };
+          
+          // Handle new subconcept structure
+          if (conceptData.subconcepts) {
+            conceptData.subconcepts.forEach((subconcept: unknown) => {
+              const subconceptData = subconcept as { task?: { status?: string; is_completed?: boolean; is_verified?: boolean } };
+              if (subconceptData.task) {
+                totalTasksCount++;
+                if (subconceptData.task.is_completed || subconceptData.task.is_verified || subconceptData.task.status === 'completed') {
+                  completedTasksCount++;
+                }
               }
             });
+          } else {
+            // Handle legacy subtopic structure
+        const subtopics = conceptData.subTopics || conceptData.subtopics || [];
+        subtopics.forEach((subtopic: unknown) => {
+          const subtopicData = subtopic as { tasks?: unknown[] };
+          const tasks = subtopicData.tasks || [];
+              totalTasksCount += tasks.length;
+          
+          tasks.forEach((task: unknown) => {
+                const taskData = task as { status?: string; is_completed?: boolean; is_verified?: boolean };
+                if (taskData.is_completed || taskData.is_verified || taskData.status === 'completed') {
+                  completedTasksCount++;
+            }
           });
-        }
-      });
-      
-      setTotalTasks(totalTasksCount);
-      setCompletedTasks(completedTasksCount);
-    } catch (error) {
-      console.error('Failed to calculate completion percentage:', error);
-      setTotalTasks(0);
-      setCompletedTasks(0);
+        });
+          }
+        });
+        
+        setTotalTasks(totalTasksCount);
+        setCompletedTasks(completedTasksCount);
+        console.log(`📊 Fallback calculation: ${completedTasksCount}/${totalTasksCount} tasks completed`);
+      } catch (fallbackError) {
+        console.error('Failed fallback calculation:', fallbackError);
+        setTotalTasks(0);
+        setCompletedTasks(0);
+      }
     }
   }, [getToken]);
+
+  // Function to refresh all progress data (called after task completion)
+  const handleProgressUpdate = useCallback(async () => {
+    if (!project) return;
+    
+    const projectIdNum = parseInt(project.project_id);
+    console.log('🔄 Refreshing all progress data...');
+    
+    try {
+      await loadProgressData(projectIdNum);
+      console.log('✅ All progress data refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh progress data:', error);
+    }
+  }, [project, loadProgressData]);
 
   // Load project data
   useEffect(() => {
@@ -147,9 +182,9 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             const statusResponse = await getAgentStatus(projectIdNum, getToken);
             setProcessingStatus(`Completed: ${statusResponse.message}`);
             
-            // Calculate completion percentage
+            // Load real progress data from backend
             if (token) {
-              await calculateCompletionPercentage(projectIdNum);
+              await loadProgressData(projectIdNum);
             }
           } catch (error) {
             console.warn('Could not fetch agent status:', error);
@@ -165,7 +200,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
     };
 
     loadProject();
-  }, [isLoaded, projectId, getToken, calculateCompletionPercentage]);
+  }, [isLoaded, projectId, getToken, loadProgressData]);
 
   const handleGenerateLearningPath = async () => {
     if (!project) return;
@@ -478,15 +513,15 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
           {/* Left Sidebar - Concepts */}
           <aside className="col-span-12 xl:col-span-3 h-full" role="navigation" aria-label="Learning path navigation">
             <div className="h-full">
-              <ConceptsSidebarModular
-                projectId={projectId}
-                onContentSelect={handleContentSelect}
+        <ConceptsSidebarModular
+          projectId={projectId}
+          onContentSelect={handleContentSelect}
                 activeDayNumber={activeDayNumber}
-              />
+        />
             </div>
           </aside>
 
-          {/* Main Content Area */}
+        {/* Main Content Area */}
           <main className="col-span-12 xl:col-span-9 min-w-0 h-full">
             {/* Learning Progression Toggle */}
             {project?.is_processed && (
@@ -523,13 +558,14 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             {/* Content Display */}
             <div className="space-y-6">
               {project?.is_processed ? (
-                selectedContent ? (
-                  <ContentDisplay
-                    selectedContent={selectedContent}
-                    onVerifyTask={handleVerifyTask}
-                    projectId={projectId}
-                  />
-                ) : (
+              selectedContent ? (
+              <ContentDisplay
+                selectedContent={selectedContent}
+                onVerifyTask={handleVerifyTask}
+                  projectId={projectId}
+                    onProgressUpdate={handleProgressUpdate}
+              />
+              ) : (
                   <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-12 text-center">
                     <div className="max-w-md mx-auto">
                       <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -542,17 +578,17 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
                         Choose any concept, subconcept, or task from the learning path to begin your journey
                       </p>
                     </div>
-                  </div>
-                )
-              ) : (
-                <LearningPathGenerator
-                  isProcessing={isProcessing}
-                  processingStatus={processingStatus}
-                  agentError={agentError}
-                  onGenerateClick={handleGenerateLearningPath}
-                />
-              )}
-            </div>
+                </div>
+              )
+            ) : (
+              <LearningPathGenerator
+                isProcessing={isProcessing}
+                processingStatus={processingStatus}
+                agentError={agentError}
+                onGenerateClick={handleGenerateLearningPath}
+              />
+            )}
+          </div>
           </main>
         </div>
       </div>

@@ -314,6 +314,82 @@ export const getDaysProgress = async (
   }
 };
 
+// Get comprehensive project progress from backend
+export const getProjectProgress = async (
+  projectId: number,
+  getToken: () => Promise<string | null>
+) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/progress`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Failed to get project progress: ${errorData}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting project progress:", error);
+    throw error;
+  }
+};
+
+// Force refresh all progress data (call after task completion)
+export const refreshProjectProgress = async (
+  projectId: number,
+  getToken: () => Promise<string | null>
+) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    // Call both progress endpoints to ensure fresh data
+    const [progressData, daysData] = await Promise.all([
+      fetch(`${API_BASE_URL}/projects/${projectId}/progress`, {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${token}` },
+      }),
+      fetch(`${API_BASE_URL}/projects/${projectId}/days/progress`, {
+        method: "GET", 
+        headers: { "Authorization": `Bearer ${token}` },
+      })
+    ]);
+
+    if (!progressData.ok) {
+      throw new Error(`Failed to refresh progress: ${progressData.status}`);
+    }
+    
+    if (!daysData.ok) {
+      throw new Error(`Failed to refresh days progress: ${daysData.status}`);
+    }
+
+    const progressResult = await progressData.json();
+    const daysResult = await daysData.json();
+    
+    return {
+      progress: progressResult,
+      days: daysResult
+    };
+  } catch (error) {
+    console.error("Error refreshing project progress:", error);
+    throw error;
+  }
+};
+
 // ==================== AGENT API FUNCTIONS ====================
   
 // Agent API functions

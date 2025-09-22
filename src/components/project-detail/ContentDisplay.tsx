@@ -3,7 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { verifyTask } from '../../../services/api';
+import { verifyTask, refreshProjectProgress } from '../../../services/api';
 
 interface SelectedContent {
   type: 'project' | 'concept' | 'subconcept' | 'subtopic' | 'task';
@@ -18,9 +18,10 @@ interface ContentDisplayProps {
   selectedContent: SelectedContent;
   onVerifyTask: (taskTitle: string, taskId?: string | number) => void;
   projectId: string;
+  onProgressUpdate?: () => void; // Callback to refresh progress in parent components
 }
 
-export default function ContentDisplay({ selectedContent, onVerifyTask, projectId }: ContentDisplayProps) {
+export default function ContentDisplay({ selectedContent, onVerifyTask, projectId, onProgressUpdate }: ContentDisplayProps) {
   const { getToken } = useAuth();
   const [verificationInput, setVerificationInput] = useState('');
   const [verificationLoading, setVerificationLoading] = useState(false);
@@ -90,6 +91,19 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
         
         // Update the selected content to show as verified
         selectedContent.is_verified = true;
+        
+        // Refresh all progress data after successful verification
+        try {
+          await refreshProjectProgress(parseInt(projectId), getToken);
+          console.log('✅ Progress refreshed after task verification');
+          
+          // Notify parent components to refresh their progress displays
+          if (onProgressUpdate) {
+            onProgressUpdate();
+          }
+        } catch (progressError) {
+          console.warn('Failed to refresh progress after verification:', progressError);
+        }
       } else {
         setVerificationError(result.message || 'Verification failed');
       }
