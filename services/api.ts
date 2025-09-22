@@ -390,38 +390,6 @@ export const refreshProjectProgress = async (
   }
 };
 
-// Force mark a day as completed (for testing/manual completion)
-export const markDayCompleted = async (
-  projectId: number,
-  dayNumber: number,
-  getToken: () => Promise<string | null>
-) => {
-  try {
-    const token = await getToken();
-    
-    if (!token) {
-      throw new Error("No authentication token available");
-    }
-
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/days/${dayNumber}/complete`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Failed to mark day as completed: ${errorData}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error(`Error marking day ${dayNumber} as completed:`, error);
-    throw error;
-  }
-};
 
 // ==================== AGENT API FUNCTIONS ====================
   
