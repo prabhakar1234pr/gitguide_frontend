@@ -198,12 +198,20 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
       {selectedContent.type === 'task' && selectedContent.verification_type && (
         <div className="mt-8 pt-6 border-t border-white/20">
           {selectedContent.is_verified ? (
-            // Already verified
-            <div className="bg-green-500/20 border border-green-400/50 rounded-lg p-4 text-green-300 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span className="font-semibold">✅ Task Verified!</span>
+            // Already verified - show persistent verification status
+            <div className="bg-green-500/20 border border-green-400/50 rounded-lg p-6 text-green-300">
+              <div className="flex items-center gap-3 mb-3">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span className="font-bold text-lg">✅ Task Verified Successfully!</span>
+              </div>
+              <p className="text-green-200">
+                Congratulations! You have successfully completed this task. Your work has been verified and you can now proceed to the next task.
+              </p>
+              <div className="mt-4 p-3 bg-green-600/20 rounded-md">
+                <span className="text-sm text-green-100">🎉 Well done! Keep up the great work on your learning journey.</span>
+              </div>
             </div>
           ) : (
             // Verification form
@@ -236,10 +244,46 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
                 />
               </div>
               
-              {/* Error Message */}
+              {/* Enhanced Error Message */}
               {verificationError && (
-                <div className="text-red-400 text-sm bg-red-500/20 border border-red-500/50 rounded-lg p-3">
-                  {verificationError}
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-red-300 font-semibold mb-2">❌ Verification Failed</h4>
+                      <p className="text-red-200 text-sm mb-3">{verificationError}</p>
+                      
+                      {/* Helpful suggestions based on verification type */}
+                      <div className="bg-red-600/20 rounded-md p-3">
+                        <p className="text-red-100 text-sm font-medium mb-2">💡 Common Issues & Solutions:</p>
+                        <ul className="text-red-100 text-xs space-y-1">
+                          {selectedContent.verification_type === 'github_profile' && (
+                            <>
+                              <li>• Make sure your profile URL is public and accessible</li>
+                              <li>• Verify the URL format: https://github.com/yourusername</li>
+                              <li>• Check if your GitHub profile has recent activity</li>
+                            </>
+                          )}
+                          {selectedContent.verification_type === 'repository_creation' && (
+                            <>
+                              <li>• Ensure the repository exists and is public</li>
+                              <li>• Check the URL format: https://github.com/username/repo-name</li>
+                              <li>• Verify the repository name matches the task requirements</li>
+                            </>
+                          )}
+                          {selectedContent.verification_type === 'commit_verification' && (
+                            <>
+                              <li>• Make sure you have at least one commit in the repository</li>
+                              <li>• Check if the repository is public or accessible</li>
+                              <li>• Ensure your commits are pushed to the main/master branch</li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               

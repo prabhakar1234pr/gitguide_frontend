@@ -38,6 +38,7 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   const [activeDayNumber, setActiveDayNumber] = useState<number>(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
+  const [isDayProgressVisible, setIsDayProgressVisible] = useState(false);
 
   const calculateCompletionPercentage = useCallback(async (projectIdNum: number) => {
     try {
@@ -331,13 +332,37 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
             completedTasks={completedTasks}
           />
           
-          {/* 14-Day Learning Progression - Only show if project is processed */}
+          {/* 14-Day Learning Progression Toggle - Only show if project is processed */}
           {project.is_processed && (
             <div className="px-6 pt-4 pb-2 border-b border-white/10">
-              <DaysProgressBar 
-                projectId={projectId} 
-                onActiveDayChange={setActiveDayNumber} 
-              />
+              {/* Toggle Button */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Learning Progression</h3>
+                <button
+                  onClick={() => setIsDayProgressVisible(!isDayProgressVisible)}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-sm"
+                >
+                  <span>{isDayProgressVisible ? 'Hide' : 'Show'} 14-Day Journey</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isDayProgressVisible ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Collapsible Day Progression Bar */}
+              {isDayProgressVisible && (
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                  <DaysProgressBar 
+                    projectId={projectId} 
+                    onActiveDayChange={setActiveDayNumber} 
+                  />
+                </div>
+              )}
             </div>
           )}
           

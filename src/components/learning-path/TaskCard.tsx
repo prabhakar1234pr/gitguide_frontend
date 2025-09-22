@@ -24,6 +24,8 @@ export default function TaskCard({
   subtopicId 
 }: TaskCardProps) {
   const isCompleted = task.status === 'completed';
+  const isVerified = task.is_verified === true;
+  const isVerificationPending = task.status === 'pending_verification';
 
   return (
     <div key={`task-${task.id || `${conceptIndex}-${subtopicIndex}-${taskIndex}`}`} className="flex items-center mt-1">
@@ -33,10 +35,27 @@ export default function TaskCard({
       >
         <div className="flex items-center gap-3">
           <div className={`w-1.5 h-1.5 rounded-full ${
-            isCompleted ? 'bg-green-400' : 
+            isVerified ? 'bg-green-400' : 
+            isCompleted ? 'bg-blue-400' : 
+            isVerificationPending ? 'bg-orange-400' :
             task.isUnlocked ? 'bg-yellow-400' : 'bg-gray-400'
           }`}></div>
-          <span className={`text-xs ${isCompleted ? 'text-green-400' : 'text-gray-400'}`}>{task.name}</span>
+          <span className={`text-xs flex items-center gap-2 ${
+            isVerified ? 'text-green-400' : 
+            isCompleted ? 'text-blue-400' : 
+            isVerificationPending ? 'text-orange-400' :
+            'text-gray-400'
+          }`}>
+            {task.name}
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-300 rounded">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Verified
+              </span>
+            )}
+          </span>
           {task.difficulty && (
             <span className={`text-xs px-2 py-1 rounded ${
               task.difficulty === 'easy' ? 'bg-green-500/20 text-green-300' :
