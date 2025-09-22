@@ -8,6 +8,7 @@ import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
 import LearningPathGenerator from './project-detail/LearningPathGenerator';
 import ContentDisplay from './project-detail/ContentDisplay';
 import DaysProgressBar from './DaysProgressBar';
+import { SelectedContent } from './learning-path/types';
 import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
 
 interface Project {
@@ -25,11 +26,6 @@ interface ProjectDetailProps {
   projectId: string;
 }
 
-interface SelectedContent {
-  type: 'project' | 'concept' | 'subtopic' | 'task';
-  title: string;
-  description: string;
-}
 
 export default function ProjectDetailModular({ projectId }: ProjectDetailProps) {
   const { getToken, isLoaded } = useAuth();
@@ -39,7 +35,6 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [agentError, setAgentError] = useState<string>('');
   const [selectedContent, setSelectedContent] = useState<SelectedContent | null>(null);
-  const [completionPercentage, setCompletionPercentage] = useState(0);
   const [activeDayNumber, setActiveDayNumber] = useState<number>(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
@@ -88,13 +83,10 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         }
       });
       
-      const percentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
-      setCompletionPercentage(percentage);
       setTotalTasks(totalTasksCount);
       setCompletedTasks(completedTasksCount);
     } catch (error) {
       console.error('Failed to calculate completion percentage:', error);
-      setCompletionPercentage(0);
       setTotalTasks(0);
       setCompletedTasks(0);
     }
@@ -334,7 +326,6 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
         <div className="flex-1 flex flex-col">
           <ProjectDetailHeader
             project={project}
-            completionPercentage={completionPercentage}
             processingStatus={processingStatus}
             totalTasks={totalTasks}
             completedTasks={completedTasks}

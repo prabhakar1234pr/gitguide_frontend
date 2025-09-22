@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getDaysProgress, getProjectConcepts } from '../services/api';
+import { getDaysProgress, getProjectConcepts } from '../../services/api';
 
 interface ProgressStats {
   overall: {
