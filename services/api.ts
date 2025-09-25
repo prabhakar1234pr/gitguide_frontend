@@ -817,12 +817,37 @@ export const updateTaskStatus = async (
   }
 };
 
-// Mark task as completed (convenience function)
-export const markTaskCompleted = async (
-  taskId: number,
+
+// Auto-verify all tasks that can be verified via GitHub API
+export const autoVerifyTasks = async (
+  projectId: number,
   getToken: () => Promise<string | null>
 ) => {
-  return updateTaskStatus(taskId, 'completed', getToken);
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/auto-verify`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Auto-verification failed: ${errorData}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error in auto-verification:", error);
+    throw error;
+  }
 };
 
 // Check if day can be unlocked (all tasks completed)

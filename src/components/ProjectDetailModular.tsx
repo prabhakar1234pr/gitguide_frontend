@@ -318,12 +318,6 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
     setSelectedContent(content);
   };
 
-  const handleVerifyTask = (taskTitle: string) => {
-    // This could be extended to mark tasks as complete
-    console.log('Verifying task:', taskTitle);
-    // For now, just show a success message
-    alert(`Task "${taskTitle}" marked as verified!`);
-  };
 
   if (loading) {
     return (
@@ -561,7 +555,6 @@ export default function ProjectDetailModular({ projectId }: ProjectDetailProps) 
               selectedContent ? (
               <ContentDisplay
                 selectedContent={selectedContent}
-                onVerifyTask={handleVerifyTask}
                   projectId={projectId}
                     onProgressUpdate={handleProgressUpdate}
               />

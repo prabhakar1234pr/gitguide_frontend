@@ -16,12 +16,11 @@ interface SelectedContent {
 
 interface ContentDisplayProps {
   selectedContent: SelectedContent;
-  onVerifyTask: (taskTitle: string, taskId?: string | number) => void;
   projectId: string;
   onProgressUpdate?: () => void; // Callback to refresh progress in parent components
 }
 
-export default function ContentDisplay({ selectedContent, onVerifyTask, projectId, onProgressUpdate }: ContentDisplayProps) {
+export default function ContentDisplay({ selectedContent, projectId, onProgressUpdate }: ContentDisplayProps) {
   const { getToken } = useAuth();
   const [verificationInput, setVerificationInput] = useState('');
   const [verificationLoading, setVerificationLoading] = useState(false);
@@ -435,18 +434,23 @@ export default function ContentDisplay({ selectedContent, onVerifyTask, projectI
         </div>
       )}
       
-      {/* Regular task verify button for non-verification tasks */}
+      {/* GitHub verification note for tasks without specific verification type */}
       {selectedContent.type === 'task' && !selectedContent.verification_type && (
         <div className="mt-8 pt-6 border-t border-white/20">
-          <button
-            onClick={() => onVerifyTask(selectedContent.title, selectedContent.id)}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Mark Complete
-          </button>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-blue-300 font-semibold mb-2">Automatic GitHub Verification</h4>
+                <p className="text-gray-300 text-sm">
+                  This task will be automatically verified when you complete the required GitHub actions. 
+                  The system monitors your repository for commits, file changes, and repository structure to verify completion.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

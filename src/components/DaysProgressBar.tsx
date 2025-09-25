@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { getProjectDays, verifyDay0Repository, refreshProjectProgress, markDayCompleted } from '../../services/api';
+import { getProjectDays, verifyDay0Repository, refreshProjectProgress, markDayCompleted, autoVerifyTasks } from '../../services/api';
 
 interface Day {
   day_id: number;
@@ -73,6 +73,29 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
   const refreshDaysData = async () => {
     console.log('🔄 Refreshing days progress...');
     await loadDays();
+  };
+
+  // Auto-verify all tasks via GitHub API
+  const handleAutoVerify = async () => {
+    try {
+      console.log('🔍 Starting auto-verification...');
+      const result = await autoVerifyTasks(parseInt(projectId), getToken);
+      
+      if (result.success) {
+        console.log('✅ Auto-verification completed:', result);
+        alert(`Auto-verification completed! ${result.message}`);
+        
+        // Refresh all progress data
+        await refreshProjectProgress(parseInt(projectId), getToken);
+        await refreshDaysData();
+      } else {
+        console.log('❌ Auto-verification failed:', result.error);
+        alert(`Auto-verification failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error in auto-verification:', error);
+      alert(`Auto-verification error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   // Test function to manually force day completion check
@@ -327,6 +350,12 @@ export default function DaysProgressBar({ projectId, onActiveDayChange }: DaysPr
             className="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/50 rounded text-yellow-300 transition-colors"
           >
             🧪 Test Day 0 Completion
+          </button>
+          <button
+            onClick={handleAutoVerify}
+            className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 border border-green-400/50 rounded text-green-300 transition-colors"
+          >
+            🔍 Auto-Verify Tasks
           </button>
           <button
             onClick={() => refreshDaysData()}

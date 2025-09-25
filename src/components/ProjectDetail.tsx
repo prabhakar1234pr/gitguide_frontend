@@ -7,7 +7,7 @@ import ConceptsSidebar from './ConceptsSidebar';
 import ChatAssistant from './ChatAssistant';
 import DaysProgressBar from './DaysProgressBar';
 import ContentDisplay from './project-detail/ContentDisplay';
-import { triggerAgentProcessing, getAgentStatus, getProjectConcepts, markTaskCompleted } from '../../services/api';
+import { triggerAgentProcessing, getAgentStatus, getProjectConcepts } from '../../services/api';
 
 interface Project {
   project_id: string;
@@ -283,33 +283,6 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     setSelectedContent(content);
   };
 
-  const handleVerifyTask = async (taskTitle: string, taskId?: string | number) => {
-    if (!project || !taskId) {
-      alert('Task ID not available for completion');
-      return;
-    }
-
-    try {
-      // Convert taskId to number if it's a string
-      const taskIdNum = typeof taskId === 'string' ? parseInt(taskId) : taskId;
-      if (isNaN(taskIdNum)) {
-        alert('Invalid task ID');
-        return;
-      }
-
-      console.log('Marking task as completed:', taskTitle, 'ID:', taskIdNum);
-      await markTaskCompleted(taskIdNum, getToken);
-
-      alert(`Task "${taskTitle}" marked as completed!`);
-      
-      // Reload project data to update completion percentage and UI
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('Failed to mark task as completed:', error);
-      alert(`Failed to mark task "${taskTitle}" as completed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  };
 
   const getProjectName = (repoUrl: string) => {
     try {
@@ -423,7 +396,6 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                 selectedContent ? (
                   <ContentDisplay
                     selectedContent={selectedContent}
-                    onVerifyTask={handleVerifyTask}
                     projectId={projectId}
                   />
                 ) : (
