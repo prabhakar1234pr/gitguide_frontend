@@ -1,50 +1,356 @@
 @import "tailwindcss";
 
+/* ============================================
+   CYBERPUNK THEME - GitGuide 2077
+   ============================================ */
+
 :root {
-  --background: linear-gradient(135deg, #581c87 0%, #1e3a8a 50%, #312e81 100%);
-  --foreground: #f8fafc;
+  /* Cyberpunk Color Palette */
+  --cyber-bg-primary: #0a0e27;
+  --cyber-bg-secondary: #0f1729;
+  --cyber-bg-tertiary: #1a1f3a;
+  
+  /* Neon Colors */
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff006e;
+  --neon-yellow: #ffbe0b;
+  --neon-green: #39ff14;
+  --neon-purple: #bf00ff;
+  --neon-blue: #0080ff;
+  
+  /* Accent Colors */
+  --accent-primary: #00f0ff;
+  --accent-secondary: #ff006e;
+  --accent-tertiary: #ffbe0b;
+  
+  /* Text Colors */
+  --text-primary: #e0e7ff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-neon: #00f0ff;
+  
+  /* Border Colors */
+  --border-primary: rgba(0, 240, 255, 0.3);
+  --border-secondary: rgba(255, 0, 110, 0.3);
+  --border-glow: rgba(0, 240, 255, 0.5);
+  
+  /* Shadow Colors */
+  --shadow-cyan: 0 0 20px rgba(0, 240, 255, 0.5);
+  --shadow-magenta: 0 0 20px rgba(255, 0, 110, 0.5);
+  --shadow-yellow: 0 0 20px rgba(255, 190, 11, 0.5);
+  
+  /* Gradient Backgrounds */
+  --gradient-cyber: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1729 100%);
+  --gradient-neon: linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(255, 0, 110, 0.1) 100%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--cyber-bg-primary);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background: linear-gradient(135deg, #581c87 0%, #1e3a8a 50%, #312e81 100%);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
-  background: linear-gradient(135deg, #581c87 0%, #1e3a8a 50%, #312e81 100%);
-  background-attachment: fixed;
+  background: var(--cyber-bg-primary);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Ensure consistent gradient across all pages */
+body {
+  background: var(--gradient-cyber);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Cyberpunk Grid Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Animated Scanlines Effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+  animation: scanlines 8s linear infinite;
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50px); }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  scrollbar-color: var(--neon-cyan) var(--cyber-bg-secondary);
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 *::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--cyber-bg-secondary);
+  border-left: 1px solid var(--border-primary);
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--neon-magenta) 100%);
+  border-radius: 0;
+  border: 1px solid var(--border-primary);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, var(--neon-magenta) 0%, var(--neon-cyan) 100%);
+  box-shadow: var(--shadow-cyan);
+}
+
+/* ============================================
+   CYBERPUNK ANIMATIONS
+   ============================================ */
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 5px var(--neon-cyan),
+      0 0 10px var(--neon-cyan),
+      0 0 20px var(--neon-cyan),
+      0 0 40px var(--neon-cyan);
+  }
+  50% {
+    text-shadow: 
+      0 0 2px var(--neon-cyan),
+      0 0 5px var(--neon-cyan),
+      0 0 10px var(--neon-cyan),
+      0 0 20px var(--neon-cyan);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px var(--neon-cyan),
+      0 0 10px var(--neon-cyan),
+      inset 0 0 5px var(--neon-cyan);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px var(--neon-cyan),
+      0 0 20px var(--neon-cyan),
+      inset 0 0 10px var(--neon-cyan);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.cyber-card {
+  background: rgba(15, 23, 41, 0.8);
+  border: 1px solid var(--border-primary);
+  backdrop-filter: blur(10px);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cyber-card:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--shadow-cyan);
+  transform: translateY(-2px);
+}
+
+.cyber-card:hover::before {
+  opacity: 1;
+}
+
+.neon-text {
+  color: var(--neon-cyan);
+  text-shadow: 
+    0 0 5px var(--neon-cyan),
+    0 0 10px var(--neon-cyan),
+    0 0 20px var(--neon-cyan);
+}
+
+.neon-text-magenta {
+  color: var(--neon-magenta);
+  text-shadow: 
+    0 0 5px var(--neon-magenta),
+    0 0 10px var(--neon-magenta),
+    0 0 20px var(--neon-magenta);
+}
+
+.neon-text-yellow {
+  color: var(--neon-yellow);
+  text-shadow: 
+    0 0 5px var(--neon-yellow),
+    0 0 10px var(--neon-yellow),
+    0 0 20px var(--neon-yellow);
+}
+
+.cyber-button {
+  background: transparent;
+  border: 2px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.cyber-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.cyber-button:hover {
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 
+    0 0 10px var(--neon-cyan),
+    0 0 20px var(--neon-cyan),
+    inset 0 0 10px var(--neon-cyan);
+  transform: translateY(-2px);
+}
+
+.cyber-button:hover::before {
+  left: 100%;
+}
+
+.glitch-effect {
+  animation: glitch 0.3s ease-in-out infinite;
+}
+
+.neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+.border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  body::before {
+    background-size: 30px 30px;
+  }
+  
+  .cyber-button {
+    padding: 0.5rem 1.5rem;
+    letter-spacing: 1px;
+  }
 }

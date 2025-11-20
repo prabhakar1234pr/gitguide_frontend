@@ -44,19 +44,38 @@ export default function ConceptCard({
   const contentCount = hasSubconcepts ? concept.subconcepts!.length : (hasSubtopics ? concept.subTopics!.length : 0);
 
   return (
-    <div key={`concept-${conceptId}`} className="border border-white/10 rounded-lg">
-      <div className="flex items-center">
+    <div key={`concept-${conceptId}`} className="cyber-card mb-3 overflow-hidden group">
+      <div className="flex items-center relative">
+        {/* Status Indicator Bar */}
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+          concept.isUnlocked ? 'bg-gradient-to-b from-[#39ff14] to-[#00f0ff]' : 'bg-[#64748b]'
+        }`}></div>
+        
         <button
           onClick={() => onConceptClick(concept, conceptIndex)}
-          className="flex-1 p-3 text-left hover:bg-white/5 transition-colors rounded-l-lg"
+          className="flex-1 p-4 text-left hover:bg-[#00f0ff]/5 transition-all duration-300 pl-5"
         >
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${concept.isUnlocked ? 'bg-green-400' : 'bg-gray-400'}`}></div>
-            <div>
-              <span className="font-medium text-white">{concept.name}</span>
-              {concept.day_number !== undefined && (
-                <span className="ml-2 text-xs text-gray-400">Day {concept.day_number}</span>
-              )}
+            {/* Status Dot */}
+            <div className={`w-2 h-2 rounded-full ${
+              concept.isUnlocked 
+                ? 'bg-[#39ff14] animate-pulse shadow-[0_0_10px_rgba(57,255,20,0.5)]' 
+                : 'bg-[#64748b]'
+            }`}></div>
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`font-bold uppercase tracking-wide text-sm ${
+                  concept.isUnlocked ? 'text-[#e0e7ff]' : 'text-[#64748b]'
+                }`}>
+                  {concept.name}
+                </span>
+                {concept.day_number !== undefined && (
+                  <span className="px-2 py-0.5 bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] text-[10px] font-bold uppercase tracking-widest">
+                    Day {concept.day_number}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </button>
@@ -67,11 +86,11 @@ export default function ConceptCard({
             e.stopPropagation();
             onRegenerateConcept(concept, concept.id.toString());
           }}
-          className="p-2 text-gray-400 hover:text-blue-400 hover:bg-white/10 rounded transition-colors mr-1"
+          className="p-3 text-[#64748b] hover:text-[#00f0ff] hover:bg-[#00f0ff]/10 transition-all duration-300 mr-1 group/regen"
           title="Regenerate this concept"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg className="w-4 h-4 group-hover/regen:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
         
@@ -79,22 +98,23 @@ export default function ConceptCard({
         {hasContent && (
           <button
             onClick={() => onToggleConceptExpansion(conceptId)}
-            className="p-3 hover:bg-white/5 transition-colors rounded-r-lg group"
+            className="p-3 hover:bg-[#00f0ff]/10 transition-all duration-300 group/expand border-l border-[#00f0ff]/20"
             title={isExpanded ? `Collapse ${hasSubconcepts ? 'subconcepts' : 'subtopics'}` : `Show ${contentCount} ${hasSubconcepts ? 'subconcepts' : 'subtopics'}`}
           >
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-400 group-hover:text-gray-300">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#00f0ff] bg-[#00f0ff]/10 px-2 py-1 border border-[#00f0ff]/30">
                 {contentCount}
               </span>
               <svg 
-                className={`w-4 h-4 text-gray-300 group-hover:text-white transition-all ${
+                className={`w-4 h-4 text-[#00f0ff] transition-all duration-300 ${
                   isExpanded ? 'rotate-180' : ''
                 }`}
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
+                strokeWidth={2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </button>
@@ -103,7 +123,7 @@ export default function ConceptCard({
       
       {/* Content List - Subconcepts or Subtopics */}
       {isExpanded && hasContent && (
-        <div className="ml-4 pb-2 border-l-2 border-white/10 pl-3">
+        <div className="ml-6 pb-3 border-l-2 border-[#00f0ff]/30 pl-4 mt-2">
           {hasSubconcepts ? (
             // Render subconcepts (new structure)
             concept.subconcepts!.map((subconcept, subconceptIndex) => (

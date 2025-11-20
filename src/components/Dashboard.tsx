@@ -104,69 +104,147 @@ export default function Dashboard() {
   // Show loading state while Clerk is initializing
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading your projects...</div>
+      <div className="min-h-screen flex items-center justify-center relative z-10">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-transparent border-t-[#00f0ff] border-r-[#ff006e] rounded-full animate-spin mx-auto"></div>
+            <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-[#ffbe0b] border-l-[#39ff14] rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <div className="neon-text text-2xl font-bold uppercase tracking-wider">
+            Loading Projects...
+          </div>
+          <div className="text-[#94a3b8] text-sm uppercase tracking-widest">
+            Initializing Neural Network
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen relative z-10">
       {projects.length === 0 ? (
         // Hero Section - shown when no projects exist
         <main className="min-h-screen flex items-center justify-center p-6">
-          <div className="text-center space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
-                Welcome to GitGuide
-              </h1>
-              <p className="text-xl text-gray-200 max-w-2xl mx-auto">
-                Transform any GitHub repository into a personalized learning journey. 
-                Master new technologies with guided, interactive tutorials.
-              </p>
+          <div className="text-center space-y-12 max-w-4xl">
+            {/* Glitch Title */}
+            <div className="space-y-6">
+              <div className="relative inline-block">
+                <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight">
+                  <span className="neon-text neon-pulse">GIT</span>
+                  <span className="neon-text-magenta">GUIDE</span>
+                </h1>
+                <div className="absolute -top-2 -left-2 text-7xl md:text-8xl font-black uppercase tracking-tight opacity-20 text-[#00f0ff]">
+                  GITGUIDE
+                </div>
+              </div>
+              
+              <div className="relative">
+                <p className="text-xl md:text-2xl text-[#94a3b8] max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
+                  <span className="text-[#00f0ff]">// </span>
+                  Transform GitHub repositories into 
+                  <span className="text-[#ff006e] font-semibold"> neural learning paths</span>
+                  <br />
+                  <span className="text-[#00f0ff]">// </span>
+                  Master code with 
+                  <span className="text-[#ffbe0b] font-semibold"> AI-powered guidance</span>
+                </p>
+              </div>
             </div>
             
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-gradient-to-r from-white to-gray-100 hover:from-gray-50 hover:to-white text-purple-700 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border border-white/20"
-            >
-              ✨ Create New Learning Project
-            </button>
+            {/* Cyber Button */}
+            <div className="flex flex-col items-center gap-6">
+              <button
+                onClick={() => setShowModal(true)}
+                className="cyber-button text-lg group relative"
+              >
+                <span className="relative z-10 flex items-center gap-3">
+                  <span className="text-2xl">⚡</span>
+                  <span>Initialize Project</span>
+                  <span className="text-2xl">⚡</span>
+                </span>
+              </button>
+              
+              <div className="flex items-center gap-4 text-sm text-[#64748b] uppercase tracking-widest">
+                <div className="w-12 h-px bg-gradient-to-r from-transparent to-[#00f0ff]"></div>
+                <span>Neural Network Ready</span>
+                <div className="w-12 h-px bg-gradient-to-l from-transparent to-[#ff006e]"></div>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-16 text-left">
+              <div className="cyber-card p-6 space-y-2">
+                <div className="text-[#00f0ff] text-2xl">⚡</div>
+                <h3 className="text-[#00f0ff] font-bold uppercase tracking-wide text-sm">14-Day Protocol</h3>
+                <p className="text-[#94a3b8] text-xs leading-relaxed">Structured learning progression with AI-generated content</p>
+              </div>
+              <div className="cyber-card p-6 space-y-2">
+                <div className="text-[#ff006e] text-2xl">🤖</div>
+                <h3 className="text-[#ff006e] font-bold uppercase tracking-wide text-sm">AI Assistant</h3>
+                <p className="text-[#94a3b8] text-xs leading-relaxed">Context-aware neural tutor for personalized guidance</p>
+              </div>
+              <div className="cyber-card p-6 space-y-2">
+                <div className="text-[#ffbe0b] text-2xl">📊</div>
+                <h3 className="text-[#ffbe0b] font-bold uppercase tracking-wide text-sm">Progress Tracking</h3>
+                <p className="text-[#94a3b8] text-xs leading-relaxed">Real-time monitoring with GitHub verification</p>
+              </div>
+            </div>
           </div>
         </main>
       ) : (
         // Projects Grid - shown when projects exist
         <main className="px-6 py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
-                  My Learning Projects
-                </h1>
-                <p className="text-gray-300 mt-2">
-                  {projects.length} project{projects.length !== 1 ? 's' : ''}
-                </p>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-1 h-12 bg-gradient-to-b from-[#00f0ff] to-[#ff006e]"></div>
+                  <div>
+                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight">
+                      <span className="neon-text">Neural</span>
+                      <span className="text-[#e0e7ff]"> Projects</span>
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-2 h-2 bg-[#39ff14] rounded-full animate-pulse"></div>
+                      <p className="text-[#94a3b8] text-sm uppercase tracking-widest">
+                        {projects.length} Active Protocol{projects.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-white to-gray-100 hover:from-gray-50 hover:to-white text-purple-700 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-white/20"
+                className="cyber-button"
               >
-                + Create New Project
+                <span className="relative z-10 flex items-center gap-2">
+                  <span>+</span>
+                  <span>New Project</span>
+                </span>
               </button>
             </div>
 
+            {/* Projects Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <ProjectCard
+              {projects.map((project, index) => (
+                <div
                   key={project.project_id}
-                  projectId={project.project_id}
-                  repoUrl={project.repoUrl}
-                  skillLevel={project.skillLevel}
-                  domain={project.domain}
-                  createdAt={project.createdAt}
-                  onDelete={handleProjectDelete}
-                />
+                  style={{
+                    animation: `fade-in 0.5s ease-out ${index * 0.1}s both`
+                  }}
+                >
+                  <ProjectCard
+                    projectId={project.project_id}
+                    repoUrl={project.repoUrl}
+                    skillLevel={project.skillLevel}
+                    domain={project.domain}
+                    createdAt={project.createdAt}
+                    onDelete={handleProjectDelete}
+                  />
+                </div>
               ))}
             </div>
           </div>
