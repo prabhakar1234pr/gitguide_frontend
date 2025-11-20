@@ -62,7 +62,7 @@ export default function NewProjectModal({ onClose, onSubmit }: Props) {
             </h2>
           </div>
           <p className="text-[#94a3b8] text-sm uppercase tracking-widest ml-4">
-            // Neural Network Configuration
+            {'//'} Neural Network Configuration
           </p>
         </div>
 

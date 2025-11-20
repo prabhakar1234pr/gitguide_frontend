@@ -141,11 +141,11 @@ export default function Dashboard() {
               
               <div className="relative">
                 <p className="text-xl md:text-2xl text-[#94a3b8] max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
-                  <span className="text-[#00f0ff]">// </span>
+                  <span className="text-[#00f0ff]">{'//'} </span>
                   Transform GitHub repositories into 
                   <span className="text-[#ff006e] font-semibold"> neural learning paths</span>
                   <br />
-                  <span className="text-[#00f0ff]">// </span>
+                  <span className="text-[#00f0ff]">{'//'} </span>
                   Master code with 
                   <span className="text-[#ffbe0b] font-semibold"> AI-powered guidance</span>
                 </p>
